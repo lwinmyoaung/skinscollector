@@ -48,7 +48,7 @@
                 <div class="product-image-container">
                     <a href="{{ route('mlproducts') }}">
                         <img src="{{ asset('adminimages/' . ($gameImages->get('mlbb')?->image_path ?? 'photo/sora.jpg')) }}" 
-                            alt="Mobile Legend:Bang Bang" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='https://placehold.co/600x400?text=MLBB'">
+                            alt="Mobile Legend:Bang Bang" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22400%22%20viewBox%3D%220%200%20600%20400%22%3E%3Crect%20width%3D%22600%22%20height%3D%22400%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2230%22%20fill%3D%22%236c757d%22%3EMLBB%3C%2Ftext%3E%3C%2Fsvg%3E'">
                     </a>
                     <div class="platform-icons">
                         <span class="platform-icon" title="Mobile">
@@ -59,7 +59,7 @@
                 
                 <div class="product-info">
                     <h3 class="product-title">
-                        <a href="{{ route('mlproducts') }}">Mobile Legend:Bang Bang</a>
+                        <a href="{{ route('mlproducts') }}">Mobile Legends</a>
                     </h3>
 
                     <div class="product-actions">
@@ -79,7 +79,7 @@
                 <div class="product-image-container">
                     <a href="{{ route('mcgg') }}">
                         <img src="{{ asset('adminimages/' . ($gameImages->get('mcgg')?->image_path ?? 'photo/mcgg.jpg')) }}" 
-                            alt="MCGG" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='https://placehold.co/600x400?text=MCGG'">
+                            alt="MCGG" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22400%22%20viewBox%3D%220%200%20600%20400%22%3E%3Crect%20width%3D%22600%22%20height%3D%22400%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2230%22%20fill%3D%22%236c757d%22%3EMCGG%3C%2Ftext%3E%3C%2Fsvg%3E'">
                     </a>
                     <div class="platform-icons">
                         <span class="platform-icon" title="Mobile">

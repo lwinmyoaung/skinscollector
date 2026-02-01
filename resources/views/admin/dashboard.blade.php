@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('page_title', 'Dashboard')
+@section('page_title', 'Ads Manager')
 
 @section('styles')
 <style>
@@ -19,7 +19,7 @@
 <div class="container-fluid">
     <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-2 mb-4">
         <div>
-            <h1 class="h4 mb-1 fw-bold">Dashboard</h1>
+            <h1 class="h4 mb-1 fw-bold">Ads Manager</h1>
             <div class="text-muted">Welcome to your admin dashboard</div>
         </div>
         <a href="{{ url('/') }}" class="btn btn-outline-secondary d-md-none w-100">
@@ -29,79 +29,43 @@
 
 
 
-    <!-- Product Price Manager Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="h5 mb-3 fw-bold">Product Price Manager</h2>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <a href="{{ route('admin.mlbb.prices') }}" class="card border-0 shadow-sm text-decoration-none h-100 card-hover-effect">
-                <div class="card-body d-flex align-items-center p-4">
-                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
-                        <i class="fas fa-gem fa-2x text-primary"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0">MLBB</h5>
-                        <small class="text-muted">Manage Prices</small>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <a href="{{ route('admin.pubg.prices') }}" class="card border-0 shadow-sm text-decoration-none h-100 card-hover-effect">
-                <div class="card-body d-flex align-items-center p-4">
-                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
-                        <i class="fas fa-gun fa-2x text-warning"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0">PUBG</h5>
-                        <small class="text-muted">Manage Prices</small>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <a href="{{ route('admin.mcgg.prices') }}" class="card border-0 shadow-sm text-decoration-none h-100 card-hover-effect">
-                <div class="card-body d-flex align-items-center p-4">
-                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
-                        <i class="fas fa-gem fa-2x text-success"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0">MCGG</h5>
-                        <small class="text-muted">Manage Prices</small>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-6 col-lg-3 mb-3">
-            <a href="{{ route('admin.wwm.prices') }}" class="card border-0 shadow-sm text-decoration-none h-100 card-hover-effect">
-                <div class="card-body d-flex align-items-center p-4">
-                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
-                        <i class="fas fa-wind fa-2x text-info"></i>
-                    </div>
-                    <div>
-                        <h5 class="fw-bold text-dark mb-0">WWM</h5>
-                        <small class="text-muted">Manage Prices</small>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
 
-    <h2 class="h5 mb-3 fw-bold">Ads Manager</h2>
+
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-transparent border-0 pt-4 pb-2">
-            <h2 class="h6 mb-0 fw-bold"><i class="fas fa-upload me-2 text-primary"></i>Upload Slides</h2>
+            <h2 class="h6 mb-0 fw-bold"><i class="fas fa-icons me-2 text-info"></i>App Icon Manager</h2>
         </div>
         <div class="card-body pt-0">
-            <form action="{{ route('admin.advertise.store') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center">
+            <form action="{{ route('admin.app_icon.store') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center mb-3">
                 @csrf
-                <input type="file" name="images[]" class="form-control" accept="image/*" multiple required>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload
+                <input type="file" name="app_icon" class="form-control" accept="image/*" required>
+                <button type="submit" class="btn btn-info text-white">
+                    <i class="fas fa-save me-2"></i>Save App Icon
                 </button>
             </form>
-            <div class="text-muted small mt-2">Images will appear in the homepage slideshow automatically.</div>
+            @if($appIcon ?? false)
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+                    <div class="border rounded bg-light p-2">
+                        <img src="{{ $appIcon['url'] }}" alt="{{ $appIcon['name'] }}" style="width: 100px; height: 100px; object-fit: contain;">
+                    </div>
+                    <div class="d-flex flex-column flex-md-row gap-2">
+                        <div class="text-muted small">
+                            <div class="fw-semibold">Current icon: {{ $appIcon['name'] }}</div>
+                            <div>{{ number_format(($appIcon['size'] ?? 0) / 1024, 0) }} KB</div>
+                        </div>
+                        <form action="{{ route('admin.app_icon.destroy') }}" method="POST" onsubmit="return confirm('Remove current app icon?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash-alt me-1"></i>Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <div class="text-muted small">No app icon set yet.</div>
+            @endif
+            <div class="text-muted small mt-2">This icon will be stored in adminimages/logo/.</div>
         </div>
     </div>
 
@@ -140,6 +104,22 @@
                 <div class="text-muted small">No entry popup ad set yet.</div>
             @endif
             <div class="text-muted small mt-2">This image is shown once when users open the homepage.</div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 pb-2">
+            <h2 class="h6 mb-0 fw-bold"><i class="fas fa-upload me-2 text-primary"></i>Upload Slides</h2>
+        </div>
+        <div class="card-body pt-0">
+            <form action="{{ route('admin.advertise.store') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center">
+                @csrf
+                <input type="file" name="images[]" class="form-control" accept="image/*" multiple required>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Upload
+                </button>
+            </form>
+            <div class="text-muted small mt-2">Images will appear in the homepage slideshow automatically.</div>
         </div>
     </div>
 

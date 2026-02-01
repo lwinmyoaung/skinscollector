@@ -3,35 +3,88 @@
 @endphp
 
 @if($contacts->count() > 0)
-<div class="card border-0 shadow-sm h-100">
-    <div class="card-body p-4">
-        <h5 class="fw-bold mb-4"><i class="fas fa-headset me-2 text-primary"></i>Contact Support</h5>
-        <div class="d-flex flex-column gap-3">
-            @foreach($contacts as $contact)
-                <a href="{{ $contact->value }}" target="_blank" class="d-flex align-items-center text-decoration-none p-3 rounded-3 bg-light bg-opacity-50 hover-shadow transition-all" style="color: inherit;">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0" 
-                         style="width: 45px; height: 45px; background-color: {{ $contact->color ? $contact->color.'20' : '#e9ecef' }}">
-                        <i class="{{ $contact->icon ?? 'fas fa-link' }} fa-lg" style="color: {{ $contact->color ?? '#6c757d' }}"></i>
-                    </div>
-                    <div>
-                        <div class="small text-muted text-uppercase fw-bold">{{ $contact->platform }}</div>
-                        <div class="fw-medium text-break">{{ $contact->value }}</div>
-                    </div>
-                    <i class="fas fa-external-link-alt ms-auto text-muted small opacity-50"></i>
-                </a>
-            @endforeach
+<div class="d-flex flex-column gap-2">
+    @foreach($contacts as $contact)
+        <div class="card border-0 shadow-sm contact-row overflow-hidden" 
+             style="background: linear-gradient(145deg, #ffffff, {{ $contact->color ? $contact->color.'08' : '#f8f9fa' }});">
+            <div class="card-body p-3 d-flex align-items-center">
+                {{-- Icon --}}
+                <div class="icon-box rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 me-3"
+                     style="width: 50px; height: 50px; background-color: #ffffff; color: {{ $contact->color ?? '#6c757d' }}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="{{ $contact->icon ?? 'fas fa-link' }} fa-lg"></i>
+                </div>
+                
+                {{-- Content --}}
+                <div class="flex-grow-1 min-w-0 me-3">
+                    <h6 class="fw-bold mb-0 text-dark">{{ $contact->platform }}</h6>
+                    <div class="text-muted small text-break font-monospace">{{ $contact->value }}</div>
+                </div>
+                
+                {{-- Actions --}}
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-light btn-sm rounded-circle shadow-sm copy-btn" 
+                            data-clipboard-text="{{ $contact->value }}" 
+                            title="Copy">
+                        <i class="fas fa-copy text-secondary"></i>
+                    </button>
+                </div>
+            </div>
+            {{-- Decorative left border --}}
+            <div class="position-absolute top-0 start-0 h-100" style="width: 4px; background-color: {{ $contact->color ?? '#0d6efd' }}"></div>
         </div>
-    </div>
+    @endforeach
 </div>
 
 <style>
-    .hover-shadow:hover {
+    .contact-row {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        position: relative;
+    }
+    .contact-row:hover {
         transform: translateY(-2px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
-        background-color: #fff !important;
     }
-    .transition-all {
-        transition: all 0.2s ease;
+    .copy-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .copy-btn:hover {
+        background-color: #e9ecef;
+        color: #0d6efd;
+    }
+    .copy-btn.copied {
+        background-color: #198754;
+        color: white;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyBtns = document.querySelectorAll('.copy-btn');
+        
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const text = this.getAttribute('data-clipboard-text');
+                
+                navigator.clipboard.writeText(text).then(() => {
+                    // Show feedback
+                    const originalIcon = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i>';
+                    this.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalIcon;
+                        this.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
+            });
+        });
+    });
+</script>
 @endif

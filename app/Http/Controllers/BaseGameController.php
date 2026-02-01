@@ -21,7 +21,19 @@ abstract class BaseGameController extends Controller
                 ->get();
         });
 
+        // Apply custom sorting if defined in child controller
+        $products = $this->sortProducts($products);
+
         return view($this->viewName, compact('products'));
+    }
+
+    /**
+     * Default sorting: no change (already sorted by price in query)
+     * Override this in child controllers to apply custom sorting logic.
+     */
+    protected function sortProducts($products)
+    {
+        return $products;
     }
 
     /**

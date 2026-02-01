@@ -26,7 +26,7 @@
         {{-- Alert messages handled by global alert component --}}
 
 
-        <form method="POST" action="{{ route('user.topup.store') }}" enctype="multipart/form-data" class="mt-3">
+        <form method="POST" action="{{ route('topup.store') }}" enctype="multipart/form-data" class="mt-3" id="topupForm">
             @csrf
             @if(request('redirect') || old('redirect'))
                 <input type="hidden" name="redirect" value="{{ old('redirect', request('redirect')) }}">
@@ -61,7 +61,7 @@
             <div class="mb-4 d-none" id="payment_image_box">
                 <label class="form-label text-white-50">Payment QR / Info</label>
                 <div class="card p-3 border-0 bg-white payment-preview-card">
-                    <img id="payment_image_preview" src="" alt="Payment Method Image" class="rounded payment-preview-img mb-3" onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                    <img id="payment_image_preview" src="" alt="Payment Method Image" class="rounded payment-preview-img mb-3" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
                     <div id="payment_phone_box" class="d-none">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
@@ -91,7 +91,7 @@
 
             {{-- Submit --}}
             <div class="d-grid mt-5">
-                <button type="submit" class="btn btn-light text-primary fw-bold py-3 rounded-pill shadow-sm">
+                <button type="submit" class="btn btn-light text-primary fw-bold py-3 rounded-pill shadow-sm" id="topupSubmitBtn">
                     <i class="fas fa-check-circle me-2"></i>ငွေလွှဲခြင်းအတည်ပြုမည်
                 </button>
             </div>
@@ -108,6 +108,28 @@
         const paymentPhoneBox = document.getElementById('payment_phone_box');
         const paymentPhoneText = document.getElementById('payment_phone_text');
         const copyBtn = document.getElementById('copy_phone_btn');
+
+        // Form Submission Handling
+        const topupForm = document.getElementById('topupForm');
+        const submitBtn = document.getElementById('topupSubmitBtn');
+
+        if (topupForm && submitBtn) {
+            topupForm.addEventListener('submit', function(e) {
+                if (this.checkValidity()) {
+                    const originalContent = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+
+        // Restore button state on page show (bfcache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted && submitBtn) {
+                submitBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>ငွေလွှဲခြင်းအတည်ပြုမည်';
+                submitBtn.disabled = false;
+            }
+        });
 
         paymentSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];

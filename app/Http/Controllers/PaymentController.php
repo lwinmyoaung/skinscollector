@@ -21,11 +21,15 @@ class PaymentController extends Controller
             'region' => 'nullable|string',
             'zone_id' => 'nullable|string',
             'product_name' => 'nullable|string',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
         if (empty($data['server_id']) && ! empty($data['zone_id'])) {
             $data['server_id'] = $data['zone_id'];
         }
+        
+        $quantity = (int) ($data['quantity'] ?? 1);
+        if ($quantity < 1) $quantity = 1;
 
         $productName = $data['product_name'] ?? '';
         $amount = 0;
@@ -71,6 +75,10 @@ class PaymentController extends Controller
             }
         }
 
+        if ($amount > 0) {
+            $amount = $amount * $quantity;
+        }
+
         $order = [
             'game_type' => $data['game_type'],
             'product_id' => $data['product_id'],
@@ -78,7 +86,29 @@ class PaymentController extends Controller
             'player_id' => $data['player_id'],
             'server_id' => $data['server_id'] ?? '',
             'region' => $data['region'] ?? '',
+            'quantity' => $quantity,
             'amount' => $amount > 0 ? $amount : 0,
+        ];
+
+        $paymentMethods = PaymentMethod::all();
+
+        return view('payment', compact('order', 'paymentMethods'));
+    }
+
+    public function retry()
+    {
+        if (! old('game_type')) {
+            return redirect()->route('game.category');
+        }
+
+        $order = [
+            'game_type' => old('game_type'),
+            'product_id' => old('product_id'),
+            'product_name' => old('product_name'),
+            'player_id' => old('player_id'),
+            'server_id' => old('server_id'),
+            'region' => old('region'),
+            'amount' => old('amount') ?? 0,
         ];
 
         $paymentMethods = PaymentMethod::all();

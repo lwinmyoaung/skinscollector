@@ -15,11 +15,17 @@ class MLproductsController extends Controller
             ->sortBy(function ($p) {
                 $n = strtolower($p->name ?? '');
                 $priority = 3;
-                if (str_contains($n, 'weekly pass')) {
+
+                // 1. Weekly Pass
+                if (str_contains($n, 'weekly') || str_contains($n, 'အပတ်စဥ်')) {
                     $priority = 0;
-                } elseif (str_contains($n, 'twilight pass')) {
+                }
+                // 2. New Products Pass / Twilight Pass / Monthly / Epic / Super Value
+                elseif (str_contains($n, 'twilight') || str_contains($n, 'new products') || str_contains($n, 'monthly') || str_contains($n, 'လစဥ်') || str_contains($n, 'super value') || str_contains($n, 'epic')) {
                     $priority = 1;
-                } elseif (str_contains($n, 'frc')) {
+                }
+                // 3. Double FRC
+                elseif (str_contains($n, 'frc') || str_contains($n, 'double')) {
                     $priority = 2;
                 }
 
@@ -101,7 +107,7 @@ class MLproductsController extends Controller
         return response()->json(['status' => false, 'message' => 'Invalid ID or Server']);
     }
 
-    public function fetchAndSave(Request $request)
+    public function index(Request $request)
     {
         $region = $request->get('region', 'myanmar');
         $cacheKey = 'mlbb.products.'.$region;

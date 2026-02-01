@@ -9,7 +9,7 @@ body {
 
 @media (max-width: 992px) {
     body {
-        padding-top: 80px;
+        padding-top: 60px;
     }
 }
 
@@ -248,10 +248,10 @@ body {
 }
 
 .mg-logo img {
-    height: 45px;
-    width: 45px;
+    height: 80px;
+    width: 80px;
     object-fit: contain;
-    border-radius: 12px;
+    border-radius: 8px;
 }
 
 .mg-tagline {
@@ -493,11 +493,11 @@ body {
 .mg-dropdown-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 10px;
     color: var(--dark);
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: 1px;
     transition: var(--transition);
     font-size: 0.95rem;
 }
@@ -738,7 +738,7 @@ body {
     }
     
     .mg-header-content {
-        height: 60px; /* Fixed height for mobile header */
+        height: 60px; /* Increased height for larger logo */
         padding: 0;
         display: flex; /* Switch to flex for mobile */
         justify-content: space-between;
@@ -757,11 +757,11 @@ body {
         flex-direction: column;
         justify-content: center;
         line-height: 1;
-        margin-left: 2px;
+        margin-left: 4px;
     }
 
     .mg-mobile-brand-top {
-        font-size: 0.75rem; /* Small size */
+        font-size: 0.85rem; /* Larger size */
         font-weight: 700;
         color: #fff821;
         text-transform: uppercase;
@@ -771,7 +771,7 @@ body {
     }
 
     .mg-mobile-brand-bottom {
-        font-size: 1.1rem; /* Normal size */
+        font-size: 1.3rem; /* Larger size */
         font-weight: 800;
         color: #000000;
         text-shadow: 0 0 10px rgb(255, 255, 255);
@@ -783,6 +783,12 @@ body {
         align-items: center;
         gap: 8px;
         text-decoration: none; /* Remove underline */
+    }
+
+    .mg-logo img {
+        height: 48px; /* Larger logo */
+        width: auto;
+        object-fit: contain;
     }
 
     /* Header Content Alignment */
@@ -941,7 +947,7 @@ body {
     }
     
     .mg-header-content {
-        height: 60px; /* Slightly taller for actions */
+        height: 50px; /* Slightly taller for actions */
         gap: 5px;
     }
     

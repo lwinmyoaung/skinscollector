@@ -6,45 +6,12 @@
 @section('content')
 <div class="ml-page-wrapper">
     <div class="container">
-        {{-- HEADER --}}
-        <div class="ml-header-mobile d-lg-none">
-            <div class="ml-header-content">
-                <img src="{{ asset('adminimages/' . ($gameImages['mcgg']->image_path ?? 'photo/mcgg.jpg')) }}" alt="MCGG" class="ml-header-icon" onerror="this.src='https://placehold.co/100x100?text=MCGG'">
-                <div>
-                    <h1 class="ml-mobile-title">MCGG</h1>
-                    <p class="ml-mobile-subtitle">Instant Top Up</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3">
-            
-            {{-- DESKTOP LEFT INFO (Hidden on Mobile) --}}
-            <div class="col-lg-4 d-none d-lg-block">
-                <div class="ml-card product-info-card">
-                    <div class="ml-product-image-wrapper">
-                        <img src="{{ asset('adminimages/' . ($gameImages['mcgg']->image_path ?? 'photo/mcgg.jpg')) }}" alt="MCGG" class="ml-product-image" onerror="this.src='https://placehold.co/600x400?text=MCGG'">
-                    </div>
-                    
-                    <div class="ml-product-details">
-                        <h3 class="ml-details-title">Instructions</h3>
-                        <div class="ml-instruction-steps">
-                            <div class="step-item">
-                                <span class="step-num">1</span>
-                                <span class="step-text">Enter Player ID</span>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">2</span>
-                                <span class="step-text">Select Diamond Amount</span>
-                            </div>
-                            <div class="step-item">
-                                <span class="step-num">3</span>
-                                <span class="step-text">Complete Payment</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        @include('partials.game-header-info', [
+            'gameKey' => 'mcgg',
+            'title' => 'MCGG',
+            'steps' => ['Enter Player ID', 'Select Diamond Amount', 'Complete Payment'],
+            'imageDefault' => 'photo/mcgg.jpg'
+        ])
 
             {{-- MAIN FORM AREA --}}
             <div class="col-lg-8">
@@ -108,15 +75,27 @@
                         </div>
                         <div class="ml-card-body">
                             @php
-                                $diamondProducts = $products->filter(function($p) {
-                                    return strtolower($p->category) === 'diamonds' || str_contains(strtolower($p->name), 'diamond');
-                                });
-                                
-                                $otherProducts = $products->filter(function($p) {
-                                    return strtolower($p->category) !== 'diamonds' && !str_contains(strtolower($p->name), 'diamond');
+                                $specialProducts = $products->filter(function($p) {
+                                    $n = strtolower($p->name ?? '');
+                                    return str_contains($n, 'pass') || 
+                                           str_contains($n, 'weekly') || 
+                                           str_contains($n, 'monthly') || 
+                                           str_contains($n, 'fund');
                                 });
 
-                                $firstProduct = $diamondProducts->first() ?? $otherProducts->first();
+                                $diamondProducts = $products->filter(function($p) use ($specialProducts) {
+                                    if ($specialProducts->contains('product_id', $p->product_id)) return false;
+                                    $n = strtolower($p->name ?? '');
+                                    $c = strtolower($p->category ?? '');
+                                    return $c === 'diamonds' || str_contains($n, 'diamond') || str_contains($n, 'coin');
+                                });
+                                
+                                $otherProducts = $products->reject(function($p) use ($specialProducts, $diamondProducts) {
+                                    return $specialProducts->contains('product_id', $p->product_id) || 
+                                           $diamondProducts->contains('product_id', $p->product_id);
+                                });
+
+                                $firstProduct = $specialProducts->first() ?? $diamondProducts->first() ?? $otherProducts->first();
                                 $firstProductId = $firstProduct ? $firstProduct->product_id : null;
                             @endphp
 
@@ -126,59 +105,13 @@
                                     <p>No products available</p>
                                 </div>
                             @else
-                                {{-- 1. Diamond Packages --}}
-                                @if($diamondProducts->isNotEmpty())
-                                    <h6 class="category-header">
-                                        <i class="fas fa-gem me-2"></i>Diamonds
-                                    </h6>
-                                    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
-                                        @foreach($diamondProducts as $product)
-                                            <div class="col">
-                                                <input type="radio" class="btn-check" name="product_id" id="prod_{{ $product->product_id }}" value="{{ $product->product_id }}" data-price="{{ number_format($product->price) }} Ks" data-raw-price="{{ $product->price }}" {{ $product->product_id == $firstProductId ? 'checked' : '' }} required>
-                                                <label class="product-btn w-100 h-100 d-flex flex-column justify-content-center py-3 text-center" for="prod_{{ $product->product_id }}">
-                                                    <div class="check-circle">
-                                                        <i class="fas fa-check"></i>
-                                                    </div>
-                                                    <span class="product-name">{{ $product->name }}</span>
-                                                    <span class="product-price">{{ number_format($product->price) }} Ks</span>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                {{-- 2. Other Packages --}}
-                                @if($otherProducts->isNotEmpty())
-                                    <h6 class="category-header">
-                                        <i class="fas fa-box me-2"></i>Packages & Others
-                                    </h6>
-                                    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
-                                        @foreach($otherProducts as $product)
-                                            <div class="col">
-                                                <input type="radio" class="btn-check" name="product_id" id="prod_{{ $product->product_id }}" value="{{ $product->product_id }}" data-price="{{ number_format($product->price) }} Ks" data-raw-price="{{ $product->price }}" {{ $product->product_id == $firstProductId ? 'checked' : '' }} required>
-                                                <label class="product-btn w-100 h-100 d-flex flex-column justify-content-center py-3 text-center" for="prod_{{ $product->product_id }}">
-                                                    <div class="check-circle">
-                                                        <i class="fas fa-check"></i>
-                                                    </div>
-                                                    <span class="product-name">{{ $product->name }}</span>
-                                                    <span class="product-price">{{ number_format($product->price) }} Ks</span>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
+                                @include('partials.game-product-section', ['products' => $specialProducts, 'title' => 'Special Bundles & Packs', 'icon' => 'fas fa-star'])
+                                @include('partials.game-product-section', ['products' => $diamondProducts, 'title' => 'Diamonds', 'icon' => 'fas fa-gem'])
+                                @include('partials.game-product-section', ['products' => $otherProducts, 'title' => 'Packages & Others', 'icon' => 'fas fa-box'])
                             @endif
 
                             {{-- TOTAL & BUY BUTTON --}}
-                            <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center mobile-sticky-footer">
-                                <div class="ml-footer-price">
-                                    <span class="text-muted small">Total:</span>
-                                    <div class="total-amount" id="footerTotal"></div>
-                                </div>
-                                <button type="button" class="ml-btn-buy" id="submitOrderBtn">
-                                    ဝယ်ယူမည် <i class="fas fa-arrow-right ms-2"></i>
-                                </button>
-                            </div>
+                            @include('partials.game-footer-action')
                         </div>
                     </div>
 
@@ -188,358 +121,14 @@
     </div>
 </div>
 
-<style>
-/* Reusing MLBB styles but ensuring they load */
-:root {
-    --ml-primary: var(--primary);
-    --ml-primary-dark: var(--primary-dark);
-    --ml-secondary: var(--primary-light);
-    --ml-accent: var(--accent);
-    --ml-bg: #f8f9fa;
-    --ml-text: #2c3e50;
-    --ml-card-bg: #ffffff;
-    --ml-border-radius: 12px;
-}
-
-.ml-page-wrapper {
-    background-color: var(--ml-bg);
-    min-height: 100vh;
-    padding-bottom: 120px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.ml-header-mobile {
-    background: linear-gradient(135deg, var(--ml-primary), var(--ml-primary-dark));
-    padding: 20px;
-    border-radius: 0 0 20px 20px;
-    margin-bottom: 20px;
-    margin-left: -12px;
-    margin-right: -12px;
-    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.2);
-}
-
-.ml-header-content {
-    display: flex;
-    align-items: center;
-    color: white;
-}
-
-.ml-header-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 15px;
-    margin-right: 15px;
-    border: 2px solid rgba(255,255,255,0.3);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.ml-mobile-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin: 0;
-    text-shadow: 0 2px 4px rgba(244, 241, 241, 1);
-}
-
-.ml-mobile-subtitle {
-    color: #e4d716ff;
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin: 0;
-}
-
-.ml-card {
-    background: var(--ml-card-bg);
-    border-radius: var(--ml-border-radius);
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-    overflow: hidden;
-    height: 100%;
-}
-
-.ml-card-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    display: flex;
-    align-items: center;
-    background-color: rgba(var(--primary-rgb), 0.03);
-}
-
-.ml-step-circle {
-    background: var(--ml-primary);
-    color: white;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    margin-right: 12px;
-    box-shadow: 0 2px 5px rgba(var(--primary-rgb), 0.3);
-}
-
-.ml-card-title {
-    font-weight: 600;
-    color: var(--ml-text);
-    font-size: 1rem;
-}
-
-.ml-card-body {
-    padding: 20px;
-}
-
-/* Product Info Card */
-.product-info-card {
-    border: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-}
-
-.ml-product-image-wrapper {
-    position: relative;
-    padding-top: 60%;
-    overflow: hidden;
-}
-
-.ml-product-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.ml-product-details {
-    padding: 25px;
-}
-
-.ml-details-title {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: var(--ml-text);
-    position: relative;
-    padding-bottom: 10px;
-}
-
-.ml-details-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background: var(--ml-primary);
-    border-radius: 2px;
-}
-
-.step-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.step-num {
-    background: rgba(var(--primary-rgb), 0.1);
-    color: var(--ml-primary);
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-right: 12px;
-}
-
-.step-text {
-    font-size: 0.95rem;
-    color: #555;
-}
-
-/* Form Inputs */
-.ml-floating-input .form-control {
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    height: 50px;
-    font-size: 1rem;
-}
-
-.ml-floating-input .form-control:focus {
-    border-color: var(--ml-primary);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
-}
-
-.ml-helper-text {
-    font-size: 0.85rem;
-    color: #888;
-}
-
-/* Product Grid */
-.category-header {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--ml-text);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid rgba(0,0,0,0.05);
-    margin-top: 0.5rem;
-}
-
-.category-header i {
-    color: var(--ml-primary);
-    margin-right: 10px;
-    font-size: 1.1rem;
-}
-
-.product-btn {
-    background: #fff;
-    border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 12px;
-    padding: 1rem 0.5rem;
-    position: relative;
-    transition: all 0.2s ease;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    text-align: center;
-}
-
-.product-btn:hover {
-    border-color: var(--ml-primary);
-    background-color: #fcfcfc;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-}
-
-.btn-check:checked + .product-btn {
-    background-color: var(--ml-primary);
-    border-color: var(--ml-primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
-    transform: translateY(-2px);
-}
-
-.product-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 0.25rem;
-    line-height: 1.3;
-    color: var(--ml-text);
-}
-
-.product-price {
-    font-size: 0.85rem;
-    color: #6c757d;
-    font-weight: 500;
-}
-
-.btn-check:checked + .product-btn .product-name,
-.btn-check:checked + .product-btn .product-price {
-    color: white;
-    font-weight: 600;
-}
-
-/* Check Circle Animation */
-.check-circle {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 18px;
-    height: 18px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--ml-primary);
-    font-size: 10px;
-    opacity: 0;
-    transform: scale(0.8);
-    transition: all 0.2s ease;
-}
-
-.btn-check:checked + .product-btn .check-circle {
-    opacity: 1;
-    transform: scale(1);
-    background: white;
-    color: var(--ml-primary);
-}
-
-/* Footer & Buy Button */
-.ml-footer-price {
-    display: flex;
-    flex-direction: column;
-}
-
-.total-amount {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: var(--ml-primary);
-    line-height: 1.2;
-}
-
-
-
-/* Alerts */
-.ml-alert {
-    padding: 15px;
-    border-radius: 8px;
-    display: flex;
-    align-items: start;
-    font-size: 0.95rem;
-}
-
-.ml-alert-error {
-    background-color: #fdecea;
-    color: #dc3545;
-    border: 1px solid #fadbd8;
-}
-
-.ml-alert-error i {
-    margin-right: 10px;
-    margin-top: 3px;
-}
-/* Dynamic Price Display */
-.total-amount::after { content: "0 Ks"; }
-@foreach($products as $p)
-body:has(#prod_{{ $p->product_id }}:checked) .total-amount::after {
-    content: "{{ number_format($p->price) }} Ks";
-}
-@endforeach
-
-@media (max-width: 991px) {
-    .mobile-sticky-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        padding: 15px 20px;
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-        z-index: 9999;
-        border-top: 1px solid #eee;
-        margin-top: 0 !important;
-        animation: slideUp 0.3s ease-out;
-    }
-}
-@keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-}
-</style>
+@include('partials.game-styles')
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Price Update Logic - Handled by CSS
-    const footerTotal = document.getElementById('footerTotal');
+    // const footerTotal = document.getElementById('footerTotal'); // Removed duplicate declaration
+    
+    @include('partials.game-scripts-common')
 
     // Account Checking Logic Variables
     const playerIdInput = document.getElementById('playerId');
@@ -571,6 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const finalSubmitBtn = document.getElementById('finalSubmitBtn');
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
 
+
     if (submitBtn) {
         submitBtn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -594,10 +184,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const label = document.querySelector(`label[for="${productRadio.id}"]`);
             const productName = label.querySelector('.product-name').textContent;
-            const productPrice = label.querySelector('.product-price').textContent;
+            // const productPrice = label.querySelector('.product-price').textContent;
+
+            const rawPrice = parseFloat(productRadio.dataset.rawPrice);
+            const quantity = parseInt(qtyInput.value) || 1;
+            const total = rawPrice * quantity;
+            const formattedTotal = new Intl.NumberFormat().format(total) + ' Ks';
 
             document.getElementById('confirmItem').textContent = productName;
-            document.getElementById('confirmPrice').textContent = productPrice;
+            document.getElementById('confirmQuantity').textContent = quantity;
+            document.getElementById('confirmPrice').textContent = formattedTotal;
             document.getElementById('confirmNickname').textContent = 'Checking...';
             
             confirmModal.show();
@@ -613,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(res => res.json())
             .then(data => {
-                if (data.result === 1) {
+                if (data.status === true || data.result === 1) {
                     document.getElementById('confirmNickname').textContent = data.nickname || data.username || "Unknown";
                     if(finalSubmitBtn) finalSubmitBtn.disabled = false;
                 } else {
@@ -631,6 +227,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (finalSubmitBtn) {
         finalSubmitBtn.addEventListener('click', function() {
+            if (finalSubmitBtn.disabled || finalSubmitBtn.classList.contains('disabled')) return;
+            finalSubmitBtn.disabled = true;
+            finalSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
             document.getElementById('orderForm').submit();
         });
     }
@@ -664,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function checkMcggId(id, zone, controller) {
         checkingLoader.style.display = 'block';
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         fetch('{{ route("mcgg.checkId") }}', {
             method: 'POST',
@@ -678,7 +278,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             checkingLoader.style.display = 'none';
             currentCheckController = null;
-            if (data.result === 1) {
+            clearTimeout(timeoutId);
+
+            if (data.status === true || data.result === 1) {
                 let name = data.nickname || data.username || data.name || "Unknown";
                 usernameText.textContent = name;
                 usernameDisplay.style.display = 'block';
@@ -696,34 +298,20 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             checkingLoader.style.display = 'none';
+            clearTimeout(timeoutId);
             if (error && error.name === 'AbortError') return;
             currentCheckController = null;
+            
+            usernameText.textContent = "Error checking ID";
+            usernameDisplay.style.display = 'block';
+            usernameDisplay.querySelector('.alert').classList.remove('alert-info');
+            usernameDisplay.querySelector('.alert').classList.add('alert-danger');
+            usernameDisplay.querySelector('i').className = 'fas fa-exclamation-circle me-2';
         });
     }
 });
 </script>
 
-{{-- CONFIRMATION MODAL --}}
-<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Order</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-2"><strong>Nickname:</strong> <span id="confirmNickname" class="text-primary">Loading...</span></div>
-                <div class="mb-2"><strong>Player ID:</strong> <span id="confirmPlayerId"></span></div>
-                <div class="mb-2"><strong>Zone ID:</strong> <span id="confirmServerId"></span></div>
-                <div class="mb-2"><strong>Item:</strong> <span id="confirmItem"></span></div>
-                <div class="mb-2"><strong>Price:</strong> <span id="confirmPrice"></span></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="finalSubmitBtn">Confirm & Pay</button>
-            </div>
-        </div>
-    </div>
-</div>
+@include('partials.game-confirm-modal', ['gameKey' => 'mcgg'])
 
 @endsection

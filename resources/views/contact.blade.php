@@ -27,29 +27,30 @@
 
 <style>
     .btn-back {
-        border: 2px solid #e9ecef;
-        color: #6c757d;
-        background: transparent;
-        padding: 10px 25px;
+        background: #0d6efd;
+        color: #fff;
+        padding: 8px 20px;
         border-radius: 50px;
         font-weight: 600;
-        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         display: inline-flex;
         align-items: center;
         text-decoration: none;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+        border: 1px solid rgba(255,255,255,0.1);
     }
     .btn-back:hover {
-        border-color: #0d6efd;
-        color: #0d6efd;
-        background: transparent;
+        background: #0b5ed7;
+        color: #fff;
         transform: translateX(-5px);
+        box-shadow: 0 8px 15px rgba(13, 110, 253, 0.4);
+        border-color: transparent;
     }
-    .hover-shadow:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.08)!important;
-        background-color: #fff !important;
+    .btn-back i {
+        transition: transform 0.3s ease;
     }
-    .transition-all {
-        transition: all 0.2s ease;
+    .btn-back:hover i {
+        transform: translateX(-3px);
     }
 </style>

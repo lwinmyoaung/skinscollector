@@ -73,7 +73,7 @@
                                     <td class="text-end">
                                         <strong>{{ number_format($order->amount, 0) }}</strong>
                                     </td>
-                                    <td>
+                                    <td id="order-status-{{ $order->id }}" data-status="{{ $order->status }}">
                                         @if($order->status === 'pending')
                                             <span class="badge bg-warning-subtle text-warning">Pending</span>
                                         @elseif($order->status === 'approved')
@@ -97,4 +97,36 @@
         </div>
     </div>
 </div>
+
+<script>
+    function getStatusHtml(status) {
+        if (status === 'pending') {
+            return '<span class="badge bg-warning-subtle text-warning">Pending</span>';
+        } else if (status === 'approved') {
+            return '<span class="badge bg-success-subtle text-success">Approved</span>';
+        } else if (status === 'cancelled') {
+            return '<span class="badge bg-danger-subtle text-danger">Cancelled</span>';
+        } else {
+            return `<span class="badge bg-secondary-subtle text-secondary">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+        }
+    }
+
+    setInterval(function() {
+        fetch("{{ route('user.kpay.orders.fetch') }}")
+            .then(response => response.json())
+            .then(data => {
+                data.orders.forEach(order => {
+                    const cell = document.getElementById(`order-status-${order.id}`);
+                    if (cell) {
+                        const currentStatus = cell.getAttribute('data-status');
+                        if (currentStatus !== order.status) {
+                             cell.innerHTML = getStatusHtml(order.status);
+                             cell.setAttribute('data-status', order.status);
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching order statuses:', error));
+    }, 3000);
+</script>
 @endsection

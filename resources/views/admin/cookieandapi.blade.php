@@ -47,18 +47,65 @@
         </div>
 
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-0 pt-4 pb-2">
+            <div class="card-header bg-transparent border-0 pt-4 pb-2 d-flex justify-content-between align-items-center">
                 <h2 class="h6 mb-0 fw-bold"><i class="fas fa-link me-2 text-primary"></i>Product APIs</h2>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-info me-2" id="btnCheckCache">
+                        <i class="fas fa-search me-1"></i>Check Status
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="btnRefreshCache">
+                        <i class="fas fa-sync me-1"></i>Refresh Data
+                    </button>
+                </div>
             </div>
             <div class="card-body pt-0">
                 <div class="row g-3">
                     <div class="col-12 col-lg-6">
-                        <label class="form-label fw-semibold" for="mlbbApiBaseUrl">MLBB API Base URL</label>
+                        <label class="form-label fw-semibold" for="mlbbApiBaseUrl">
+                            MLBB API Base URL
+                            <span id="mlbbStatusBadge">
+                                @php
+                                    $msg = $cacheStatus['mlbb_message'] ?? 'Not Checked';
+                                    $isActive = $msg === 'Active';
+                                    $isNotChecked = $msg === 'Not Checked';
+                                @endphp
+                                @if($isActive)
+                                    <span class="badge bg-success ms-1">Active</span>
+                                @elseif($isNotChecked)
+                                    <span class="badge bg-secondary ms-1">Not Checked</span>
+                                @else
+                                    <span class="badge bg-danger ms-1" title="{{ $msg }}">Inactive</span>
+                                @endif
+                            </span>
+                        </label>
+                        <div id="mlbbStatusError" class="text-danger small mb-1">
+                            @if(!$isActive && !$isNotChecked)
+                                {{ $msg }}
+                            @endif
+                        </div>
                         <input type="text" class="form-control" id="mlbbApiBaseUrl" name="mlbb_api_base_url" value="{{ old('mlbb_api_base_url', $mlbbApiBaseUrl ?? '') }}" placeholder="http://192.168.196.37:8000">
                         <div class="form-text">Used by the MLBB “Fetch from API” action.</div>
                     </div>
                     <div class="col-12 col-lg-6">
-                        <label class="form-label fw-semibold" for="pubgApiProductsUrl">PUBG Products API URL</label>
+                        <label class="form-label fw-semibold" for="pubgApiProductsUrl">
+                            PUBG Products API URL
+                            <span id="pubgStatusBadge">
+                                @php
+                                    $msg = $cacheStatus['pubg_message'] ?? 'Inactive';
+                                    $isActive = $msg === 'Active';
+                                @endphp
+                                @if($isActive)
+                                    <span class="badge bg-success ms-1">Active</span>
+                                @else
+                                    <span class="badge bg-danger ms-1" title="{{ $msg }}">Inactive</span>
+                                @endif
+                            </span>
+                        </label>
+                        <div id="pubgStatusError" class="text-danger small mb-1">
+                            @if(!$isActive && $msg !== 'Inactive')
+                                {{ $msg }}
+                            @endif
+                        </div>
                         <input type="text" class="form-control" id="pubgApiProductsUrl" name="pubg_api_products_url" value="{{ old('pubg_api_products_url', $pubgApiProductsUrlInput ?? '') }}" placeholder="http://192.168.196.37:8000/products">
                         <div class="form-text">Used by the PUBG “Fetch from API” action.</div>
                         @if(!empty($pubgApiProductsUrlResolved))
@@ -66,7 +113,25 @@
                         @endif
                     </div>
                     <div class="col-12 col-lg-6">
-                        <label class="form-label fw-semibold" for="mcggApiProductsUrl">MCGG Products API URL</label>
+                        <label class="form-label fw-semibold" for="mcggApiProductsUrl">
+                            MCGG Products API URL
+                            <span id="mcggStatusBadge">
+                                @php
+                                    $msg = $cacheStatus['mcgg_message'] ?? 'Inactive';
+                                    $isActive = $msg === 'Active';
+                                @endphp
+                                @if($isActive)
+                                    <span class="badge bg-success ms-1">Active</span>
+                                @else
+                                    <span class="badge bg-danger ms-1" title="{{ $msg }}">Inactive</span>
+                                @endif
+                            </span>
+                        </label>
+                        <div id="mcggStatusError" class="text-danger small mb-1">
+                            @if(!$isActive && $msg !== 'Inactive')
+                                {{ $msg }}
+                            @endif
+                        </div>
                         <input type="text" class="form-control" id="mcggApiProductsUrl" name="mcgg_api_products_url" value="{{ old('mcgg_api_products_url', $mcggApiProductsUrlInput ?? '') }}" placeholder="http://192.168.196.37:8000/mcgg/products">
                         <div class="form-text">Used by the MCGG “Fetch from API” action.</div>
                         @if(!empty($mcggApiProductsUrlResolved))
@@ -74,7 +139,28 @@
                         @endif
                     </div>
                     <div class="col-12 col-lg-6">
-                        <label class="form-label fw-semibold" for="wwmApiProductsUrl">WWM Products API URL</label>
+                        <label class="form-label fw-semibold" for="wwmApiProductsUrl">
+                            WWM Products API URL
+                            <span id="wwmStatusBadge">
+                                @php
+                                    $msg = $cacheStatus['wwm_message'] ?? 'Not Checked';
+                                    $isActive = $msg === 'Active';
+                                    $isNotChecked = $msg === 'Not Checked';
+                                @endphp
+                                @if($isActive)
+                                    <span class="badge bg-success ms-1">Active</span>
+                                @elseif($isNotChecked)
+                                    <span class="badge bg-secondary ms-1">Not Checked</span>
+                                @else
+                                    <span class="badge bg-danger ms-1" title="{{ $msg }}">Inactive</span>
+                                @endif
+                            </span>
+                        </label>
+                        <div id="wwmStatusError" class="text-danger small mb-1">
+                            @if(!$isActive && !$isNotChecked)
+                                {{ $msg }}
+                            @endif
+                        </div>
                         <input type="text" class="form-control" id="wwmApiProductsUrl" name="wwm_api_products_url" value="{{ old('wwm_api_products_url', $wwmApiProductsUrlInput ?? '') }}" placeholder="http://192.168.196.37:8000/wwm/products">
                         <div class="form-text">Used by the WWM “Fetch from API” action.</div>
                         @if(!empty($wwmApiProductsUrlResolved))
@@ -154,4 +240,111 @@
         </div>
     </form>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnCheck = document.getElementById('btnCheckCache');
+    const btnRefresh = document.getElementById('btnRefreshCache');
+    
+    // Helper function to update UI for a specific key
+    function updateStatusUI(key, data) {
+        const badgeContainer = document.getElementById(key + 'StatusBadge');
+        const errorContainer = document.getElementById(key + 'StatusError');
+        
+        if (!badgeContainer || !errorContainer) return;
+        
+        const status = data.status_message;
+        const isActive = status === 'Active';
+        const isNotChecked = status === 'Not Checked';
+        
+        // Update Badge
+        if (isActive) {
+            badgeContainer.innerHTML = '<span class="badge bg-success ms-1">Active</span>';
+        } else if (isNotChecked) {
+            badgeContainer.innerHTML = '<span class="badge bg-secondary ms-1">Not Checked</span>';
+        } else {
+            // Error or Inactive
+            badgeContainer.innerHTML = `<span class="badge bg-danger ms-1" title="${status}">Inactive</span>`;
+        }
+        
+        // Update Error Message
+        // Always show the message if it's not Active and not "Not Checked" (unless user wants to see "Not Checked" explicitly, but usually that's neutral)
+        // If it is "Inactive" (literal), we might want to show it or hide it. 
+        // But if it's an error message like "Fetch failed...", we MUST show it.
+        
+        if (!isActive && !isNotChecked) {
+            errorContainer.textContent = status;
+            errorContainer.style.display = 'block';
+        } else {
+            errorContainer.textContent = '';
+            errorContainer.style.display = 'none';
+        }
+    }
+
+    // Status Check
+    if (btnCheck) {
+        btnCheck.addEventListener('click', function() {
+            const originalHtml = btnCheck.innerHTML;
+            btnCheck.disabled = true;
+            btnCheck.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Checking...';
+            
+            fetch('{{ route("api.cache.status") }}')
+                .then(response => response.json())
+                .then(data => {
+                    updateStatusUI('mlbb', data.mlbb);
+                    updateStatusUI('pubg', data.pubg);
+                    updateStatusUI('mcgg', data.mcgg);
+                    updateStatusUI('wwm', data.wwm);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to check status');
+                })
+                .finally(() => {
+                    btnCheck.disabled = false;
+                    btnCheck.innerHTML = originalHtml;
+                });
+        });
+    }
+    
+    // Refresh Data
+    if (btnRefresh) {
+        btnRefresh.addEventListener('click', function() {
+            if(!confirm('Are you sure you want to refresh all data from APIs? This might take a few seconds.')) return;
+            
+            const originalHtml = btnRefresh.innerHTML;
+            btnRefresh.disabled = true;
+            btnRefresh.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+            
+            fetch('{{ route("api.refresh_cache") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    // Trigger a status check to update UI
+                    if(btnCheck) btnCheck.click();
+                    alert(data.message || 'Refresh successful');
+                } else {
+                    alert('Refresh failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to refresh data');
+            })
+            .finally(() => {
+                btnRefresh.disabled = false;
+                btnRefresh.innerHTML = originalHtml;
+            });
+        });
+    }
+});
+</script>
 @endsection

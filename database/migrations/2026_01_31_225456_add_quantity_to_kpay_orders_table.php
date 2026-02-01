@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'balance')) {
-                $table->dropColumn('balance');
-            }
+        Schema::table('kpay_orders', function (Blueprint $table) {
+            $table->integer('quantity')->default(1)->after('amount');
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->decimal('balance', 10, 2)->default(0);
+        Schema::table('kpay_orders', function (Blueprint $table) {
+            $table->dropColumn('quantity');
         });
     }
 };

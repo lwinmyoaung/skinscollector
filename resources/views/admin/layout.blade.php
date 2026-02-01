@@ -43,21 +43,25 @@
         </div>
 
         <nav class="admin-nav">
+            <a href="{{ route('admin.confirm.orders') }}" class="admin-nav-link {{ request()->routeIs('admin.confirm.orders') ? 'active' : '' }}">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Orders</span>
+            </a>
             <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-images"></i>
                 <span>Ads Manager</span>
             </a>
-            <a href="{{ route('admin.cookieandapi') }}" class="admin-nav-link {{ request()->routeIs('admin.cookieandapi') ? 'active' : '' }}">
-                <i class="fas fa-cookie-bite"></i>
-                <span>Cookie and API Manager</span>
+            <a href="{{ route('admin.game-images.index') }}" class="admin-nav-link {{ request()->routeIs('admin.game-images.*') ? 'active' : '' }}">
+                <i class="fas fa-image"></i>
+                <span>Game Images</span>
             </a>
-            <a href="{{ route('admin.kpay.orders') }}" class="admin-nav-link {{ request()->routeIs('admin.kpay.orders') ? 'active' : '' }}">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Orders</span>
+            <a href="{{ url('admin/paymentmethod') }}" class="admin-nav-link {{ request()->is('admin/paymentmethod*') ? 'active' : '' }}">
+                <i class="fas fa-credit-card"></i>
+                <span>Payments</span>
             </a>
-            <a href="{{ route('admin.users') }}" class="admin-nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
-                <i class="fas fa-users"></i>
-                <span>Users</span>
+            <a href="{{ route('admin.contacts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.contacts.index') ? 'active' : '' }}">
+                <i class="fas fa-address-book"></i>
+                <span>Contact Manager</span>
             </a>
             <a class="admin-nav-link {{ request()->routeIs('admin.mlbb.prices', 'admin.pubg.prices', 'admin.mcgg.prices', 'admin.wwm.prices') ? '' : 'collapsed' }}" 
                data-bs-toggle="collapse" 
@@ -89,25 +93,25 @@
                     </a>
                 </div>
             </div>
-            <a href="{{ route('admin.game-images.index') }}" class="admin-nav-link {{ request()->routeIs('admin.game-images.*') ? 'active' : '' }}">
-                <i class="fas fa-image"></i>
-                <span>Game Images</span>
+            <a href="{{ route('admin.cookieandapi') }}" class="admin-nav-link {{ request()->routeIs('admin.cookieandapi') ? 'active' : '' }}">
+                <i class="fas fa-cookie-bite"></i>
+                <span>Cookie and API Manager</span>
             </a>
-            <a href="{{ route('admin.bank.index') }}" class="admin-nav-link {{ request()->routeIs('admin.bank.index') ? 'active' : '' }}">
-                <i class="fas fa-university"></i>
-                <span>Bank & Profit</span>
+            <a href="{{ route('admin.users') }}" class="admin-nav-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
             </a>
             <a href="{{ route('admin.activity.logs') }}" class="admin-nav-link {{ request()->routeIs('admin.activity.logs') ? 'active' : '' }}">
                 <i class="fas fa-history"></i>
                 <span>User Activity</span>
             </a>
-            <a href="{{ route('admin.contacts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.contacts.index') ? 'active' : '' }}">
-                <i class="fas fa-address-book"></i>
-                <span>Contact Manager</span>
+            <a href="{{ route('admin.bank.index') }}" class="admin-nav-link {{ request()->routeIs('admin.bank.index') ? 'active' : '' }}">
+                <i class="fas fa-university"></i>
+                <span>Bank & Profit</span>
             </a>
-            <a href="{{ url('admin/paymentmethod') }}" class="admin-nav-link {{ request()->is('admin/paymentmethod*') ? 'active' : '' }}">
-                <i class="fas fa-credit-card"></i>
-                <span>Payments</span>
+            <a href="{{ route('admin.error-logs.index') }}" class="admin-nav-link {{ request()->routeIs('admin.error-logs.*') ? 'active' : '' }}">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Error Logs</span>
             </a>
         </nav>
 

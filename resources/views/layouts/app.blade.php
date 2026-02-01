@@ -233,6 +233,56 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <!-- Sticky Add to Cart -->
     @yield('sticky-cart')
+
+    <!-- Floating Support Button -->
+    @if(request()->routeIs('game.category'))
+    <a href="{{ route('contact') }}" class="floating-support-btn" aria-label="Contact Support">
+        <i class="fas fa-headset"></i>
+    </a>
+    @endif
+    
+    <style>
+        .floating-support-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: var(--primary, #0d6efd);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 9999;
+            transition: all 0.3s ease;
+            font-size: 24px;
+            text-decoration: none;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .floating-support-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            background-color: var(--primary-dark, #0b5ed7);
+            color: white;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .floating-support-btn:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 768px) {
+            .floating-support-btn {
+                bottom: 20px; /* Higher on mobile to avoid sticky footers/tabs */
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+    </style>
 </div>
 
 <!-- Bootstrap JS -->

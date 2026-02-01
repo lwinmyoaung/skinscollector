@@ -31,7 +31,7 @@ class AccountController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
-    }
+        }
 
     public function index(Request $request)
     {
@@ -99,9 +99,33 @@ class AccountController extends Controller
 
         $entryAd = $entryFiles->first();
 
+        $iconDirectory = 'logo';
+
+        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($iconDirectory)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($iconDirectory);
+        }
+
+        $iconFiles = collect(\Illuminate\Support\Facades\Storage::disk('public')->files($iconDirectory))
+            ->filter(function ($file) use ($allowedExtensions) {
+                return in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowedExtensions, true);
+            })
+            ->map(function ($file) {
+                return [
+                    'name' => basename($file),
+                    'url' => asset('adminimages/'.$file),
+                    'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
+                    'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
+                ];
+            })
+            ->sortByDesc('modified')
+            ->values();
+
+        $appIcon = $iconFiles->first();
+
         return view('admin.dashboard', [
             'slides' => $files,
             'entryAd' => $entryAd,
+            'appIcon' => $appIcon,
         ]);
     }
 
@@ -168,6 +192,42 @@ class AccountController extends Controller
         }
 
         return redirect()->route('admin.dashboard')->with('success', 'Entry ad image removed successfully.');
+    }
+
+    public function appIconStore(Request $request)
+    {
+        $validated = $request->validate([
+            'app_icon' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $directory = 'logo';
+
+        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($directory);
+        }
+
+        $existingFiles = \Illuminate\Support\Facades\Storage::disk('public')->files($directory);
+        foreach ($existingFiles as $file) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
+        }
+
+        $validated['app_icon']->store($directory, 'public');
+
+        return redirect()->route('admin.dashboard')->with('success', 'App icon updated successfully.');
+    }
+
+    public function appIconDestroy()
+    {
+        $directory = 'logo';
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
+            $files = \Illuminate\Support\Facades\Storage::disk('public')->files($directory);
+            foreach ($files as $file) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
+            }
+        }
+
+        return redirect()->route('admin.dashboard')->with('success', 'App icon removed successfully.');
     }
 
     public function cookieAndApiIndex()
@@ -286,7 +346,19 @@ class AccountController extends Controller
             ],
         ];
 
+        $cacheStatus = [
+            'mlbb' => Cache::has('mlbb.products'),
+            'mlbb_message' => Cache::get('mlbb.status_message', 'Not Checked'),
+            'pubg' => Cache::has('pubg.products'),
+            'pubg_message' => Cache::get('pubg.status_message', 'Not Checked'),
+            'mcgg' => Cache::has('mcgg.products'),
+            'mcgg_message' => Cache::get('mcgg.status_message', 'Not Checked'),
+            'wwm' => Cache::has('wwm.products'),
+            'wwm_message' => Cache::get('wwm.status_message', 'Not Checked'),
+        ];
+
         return view('admin.cookieandapi', [
+            'cacheStatus' => $cacheStatus,
             'soMiniappCookie' => $soMiniappCookie,
             'soMiniappBaseUri' => $soMiniappBaseUri,
             'soMiniappVerify' => (bool) $verify,
@@ -416,7 +488,30 @@ class AccountController extends Controller
             $this->putEncryptedSetting('settings.api.wwm_products_url_enc', $wwmUrl);
         }
 
-        return back()->with('success', 'Settings saved.');
+        // Auto-fetch data to verify settings and populate cache
+        $messages = ['Settings saved.'];
+
+        try {
+            // MLBB
+            $res = $this->performMlbbFetch('all');
+            $messages[] = 'MLBB: ' . ($res['success'] ? 'Active' : 'Inactive (' . $res['message'] . ')');
+
+            // PUBG
+            $res = $this->performPubgFetch();
+            $messages[] = 'PUBG: ' . ($res['success'] ? 'Active' : 'Inactive (' . $res['message'] . ')');
+
+            // MCGG
+            $res = $this->performMcggFetch();
+            $messages[] = 'MCGG: ' . ($res['success'] ? 'Active' : 'Inactive (' . $res['message'] . ')');
+
+            // WWM
+            $res = $this->performWwmFetch();
+            $messages[] = 'WWM: ' . ($res['success'] ? 'Active' : 'Inactive (' . $res['message'] . ')');
+        } catch (\Exception $e) {
+            $messages[] = 'Fetch Error: ' . $e->getMessage();
+        }
+
+        return back()->with('success', implode(' | ', $messages));
     }
 
     private function getEncryptedSetting(string $key, string $default = ''): string
@@ -895,9 +990,25 @@ class AccountController extends Controller
 
     public function fetchMlbbFromApi(Request $request)
     {
+        $region = $request->input('region', 'myanmar');
+        $result = $this->performMlbbFetch($region);
+
+        if (! $result['success']) {
+            return back()->with('error', $result['message']);
+        }
+
+        $redirectRegion = $result['redirect_region'] ?? '';
+        
+        return redirect()->route('admin.mlbb.prices', ['region' => $redirectRegion])->with('success', $result['message']);
+    }
+
+    private function performMlbbFetch(string $requestedRegion = 'myanmar'): array
+    {
         $baseUrl = $this->getEncryptedSetting('settings.api.mlbb_base_url_enc', '');
         if (trim($baseUrl) === '') {
-            return back()->with('error', 'Please set MLBB API Base URL in Cookie/API Manager.');
+            $msg = 'Please set MLBB API Base URL in Cookie/API Manager.';
+            Cache::forever('mlbb.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $baseUrl = rtrim($baseUrl, '/');
         $allowedRegions = ['myanmar', 'malaysia', 'philippines', 'singapore', 'indonesia', 'russia'];
@@ -913,20 +1024,20 @@ class AccountController extends Controller
             $api[$region] = $this->resolveUrl($baseUrl, $input);
         }
 
-        $requested = strtolower(trim((string) $request->input('region', 'myanmar')));
+        $requested = strtolower(trim($requestedRegion));
         if ($requested === '' || $requested === 'all') {
             if (! empty($missing)) {
-                return back()->with('error', 'Missing MLBB API URL for: '.implode(', ', $missing).'. Set them in Cookie/API Manager.');
+                return ['success' => false, 'message' => 'Missing MLBB API URL for: '.implode(', ', $missing).'. Set them in Cookie/API Manager.'];
             }
             $regionsToFetch = array_keys($api);
         } elseif (isset($api[$requested])) {
             $regionsToFetch = [$requested];
         } else {
             if (in_array($requested, $allowedRegions, true)) {
-                return back()->with('error', 'Missing MLBB API URL for: '.$requested.'. Set it in Cookie/API Manager.');
+                return ['success' => false, 'message' => 'Missing MLBB API URL for: '.$requested.'. Set it in Cookie/API Manager.'];
             }
 
-            return back()->with('error', 'Invalid region selected');
+            return ['success' => false, 'message' => 'Invalid region selected'];
         }
 
         $normalizeKeys = function (array $item): array {
@@ -1127,7 +1238,8 @@ class AccountController extends Controller
                 $msg .= ' Errors: '.implode(', ', $errors);
             }
 
-            return back()->with('error', $msg);
+            Cache::forever('mlbb.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
 
         $redirectRegion = count($regionsToFetch) === 1 ? $regionsToFetch[0] : '';
@@ -1139,7 +1251,15 @@ class AccountController extends Controller
             $success .= '| Errors: '.implode(', ', $errors);
         }
 
-        return redirect()->route('admin.mlbb.prices', ['region' => $redirectRegion])->with('success', trim($success));
+        // Clear cache
+        Cache::forget('mlbb.products');
+        Cache::forever('mlbb.status_message', 'Active');
+
+        return [
+            'success' => true,
+            'message' => trim($success),
+            'redirect_region' => $redirectRegion,
+        ];
     }
 
     public function bulkUpdateMlbbPrices(Request $request)
@@ -1260,23 +1380,42 @@ class AccountController extends Controller
 
     public function fetchPubgFromApi(Request $request)
     {
+        $result = $this->performPubgFetch();
+
+        if (! $result['success']) {
+            return back()->with('error', $result['message']);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    private function performPubgFetch(): array
+    {
         $baseUrl = $this->getEncryptedSetting('settings.api.mlbb_base_url_enc', '');
         if (trim($baseUrl) === '') {
-            return back()->with('error', 'Please set MLBB API Base URL in Cookie/API Manager.');
+            $msg = 'Please set MLBB API Base URL in Cookie/API Manager.';
+            Cache::forever('pubg.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $url = $this->getEncryptedSetting('settings.api.pubg_products_url_enc', '');
         if (trim($url) === '') {
-            return back()->with('error', 'Please set PUBG Products API URL in Cookie/API Manager.');
+            $msg = 'Please set PUBG Products API URL in Cookie/API Manager.';
+            Cache::forever('pubg.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $url = $this->resolveUrl($baseUrl, $url);
         try {
             $resp = Http::timeout(12)->get($url);
             if (! $resp->successful()) {
-                return back()->with('error', 'API Error: '.$resp->status());
+                $msg = 'API Error: '.$resp->status();
+                Cache::forever('pubg.status_message', $msg);
+                return ['success' => false, 'message' => $msg];
             }
             $data = $resp->json();
         } catch (\Exception $e) {
-            return back()->with('error', 'Fetch failed: '.$e->getMessage());
+            $msg = 'Fetch failed: '.$e->getMessage();
+            Cache::forever('pubg.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
 
         $count = 0;
@@ -1381,8 +1520,9 @@ class AccountController extends Controller
         }
 
         Cache::forget('pubg.products');
+        Cache::forever('pubg.status_message', 'Active');
 
-        return back()->with('success', 'Fetched '.$count.' PUBG items.');
+        return ['success' => true, 'message' => 'Fetched '.$count.' PUBG items.'];
     }
 
     public function updatePubgPrices(Request $request)
@@ -1516,23 +1656,42 @@ class AccountController extends Controller
 
     public function fetchMcggFromApi(Request $request)
     {
+        $result = $this->performMcggFetch();
+
+        if (! $result['success']) {
+            return back()->with('error', $result['message']);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    private function performMcggFetch(): array
+    {
         $baseUrl = $this->getEncryptedSetting('settings.api.mlbb_base_url_enc', '');
         if (trim($baseUrl) === '') {
-            return back()->with('error', 'Please set MLBB API Base URL in Cookie/API Manager.');
+            $msg = 'Please set MLBB API Base URL in Cookie/API Manager.';
+            Cache::forever('mcgg.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $url = $this->getEncryptedSetting('settings.api.mcgg_products_url_enc', '');
         if (trim($url) === '') {
-            return back()->with('error', 'Please set MCGG Products API URL in Cookie/API Manager.');
+            $msg = 'Please set MCGG Products API URL in Cookie/API Manager.';
+            Cache::forever('mcgg.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $url = $this->resolveUrl($baseUrl, $url);
         try {
             $resp = Http::timeout(12)->get($url);
             if (! $resp->successful()) {
-                return back()->with('error', 'API Error: '.$resp->status());
+                $msg = 'API Error: '.$resp->status();
+                Cache::forever('mcgg.status_message', $msg);
+                return ['success' => false, 'message' => $msg];
             }
             $data = $resp->json();
         } catch (\Exception $e) {
-            return back()->with('error', 'Fetch failed: '.$e->getMessage());
+            $msg = 'Fetch failed: '.$e->getMessage();
+            Cache::forever('mcgg.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
 
         $count = 0;
@@ -1616,7 +1775,10 @@ class AccountController extends Controller
             }
         }
 
-        return back()->with('success', 'Fetched '.$count.' MCGG items.');
+        Cache::forget('mcgg.products');
+        Cache::forever('mcgg.status_message', 'Active');
+
+        return ['success' => true, 'message' => 'Fetched '.$count.' MCGG items.'];
     }
 
     public function updateMcggPrices(Request $request)
@@ -1746,23 +1908,42 @@ class AccountController extends Controller
 
     public function fetchWwmFromApi(Request $request)
     {
+        $result = $this->performWwmFetch();
+
+        if (! $result['success']) {
+            return back()->with('error', $result['message']);
+        }
+
+        return back()->with('success', $result['message']);
+    }
+
+    private function performWwmFetch(): array
+    {
         $baseUrl = $this->getEncryptedSetting('settings.api.mlbb_base_url_enc', '');
         if (trim($baseUrl) === '') {
-            return back()->with('error', 'Please set MLBB API Base URL in Cookie/API Manager.');
+            $msg = 'Please set MLBB API Base URL in Cookie/API Manager.';
+            Cache::forever('wwm.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $url = $this->getEncryptedSetting('settings.api.wwm_products_url_enc', '');
         if (trim($url) === '') {
-            return back()->with('error', 'Please set WWM Products API URL in Cookie/API Manager.');
+            $msg = 'Please set WWM Products API URL in Cookie/API Manager.';
+            Cache::forever('wwm.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
         $url = $this->resolveUrl($baseUrl, $url);
         try {
             $resp = Http::timeout(12)->get($url);
             if (! $resp->successful()) {
-                return back()->with('error', 'API Error: '.$resp->status());
+                $msg = 'API Error: '.$resp->status();
+                Cache::forever('wwm.status_message', $msg);
+                return ['success' => false, 'message' => $msg];
             }
             $data = $resp->json();
         } catch (\Exception $e) {
-            return back()->with('error', 'Fetch failed: '.$e->getMessage());
+            $msg = 'Fetch failed: '.$e->getMessage();
+            Cache::forever('wwm.status_message', $msg);
+            return ['success' => false, 'message' => $msg];
         }
 
         $count = 0;
@@ -1842,7 +2023,10 @@ class AccountController extends Controller
             }
         }
 
-        return back()->with('success', 'Fetched '.$count.' WWM items.');
+        Cache::forget('wwm.products');
+        Cache::forever('wwm.status_message', 'Active');
+
+        return ['success' => true, 'message' => 'Fetched '.$count.' WWM items.'];
     }
 
     public function updateWwmPrices(Request $request)
@@ -1929,5 +2113,73 @@ class AccountController extends Controller
         }
 
         return back()->with('success', "Updated $count WWM items by $percentage%.");
+    }
+
+    public function refreshCache(Request $request)
+    {
+        $results = [];
+
+        // MLBB
+        $results['mlbb'] = $this->performMlbbFetch('all');
+
+        // PUBG
+        $results['pubg'] = $this->performPubgFetch();
+
+        // MCGG
+        $results['mcgg'] = $this->performMcggFetch();
+
+        // WWM
+        $results['wwm'] = $this->performWwmFetch();
+
+        $messages = [];
+        foreach ($results as $key => $r) {
+            $status = $r['success'] ? 'Success' : 'Failed';
+            $messages[] = strtoupper($key) . ": $status";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => implode(' | ', $messages),
+            'details' => $results
+        ]);
+    }
+
+    public function getCacheStatus(Request $request)
+    {
+        $status = [];
+        
+        $status['mlbb'] = [
+            'key' => 'mlbb.products',
+            'has_cache' => Cache::has('mlbb.products'),
+            'status_message' => Cache::get('mlbb.status_message', 'Not Checked'),
+            'db_count' => AdminMlProduct::count(),
+            'last_updated' => AdminMlProduct::max('updated_at'),
+        ];
+
+        $status['pubg'] = [
+            'key' => 'pubg.products',
+            'has_cache' => Cache::has('pubg.products'),
+            'status_message' => Cache::get('pubg.status_message', 'Not Checked'),
+            'db_count' => AdminPubgProduct::count(),
+            'last_updated' => AdminPubgProduct::max('updated_at'),
+        ];
+
+        $status['mcgg'] = [
+            'key' => 'mcgg.products',
+            'has_cache' => Cache::has('mcgg.products'),
+            'status_message' => Cache::get('mcgg.status_message', 'Not Checked'),
+            'db_count' => AdminMcggProduct::count(),
+            'last_updated' => AdminMcggProduct::max('updated_at'),
+        ];
+
+        $status['wwm'] = [
+            'key' => 'wwm.products',
+            'has_cache' => Cache::has('wwm.products'),
+            'status_message' => Cache::get('wwm.status_message', 'Not Checked'),
+            'db_count' => AdminWwmProduct::count(),
+            'last_updated' => AdminWwmProduct::max('updated_at'),
+        ];
+
+        return response()->json($status);
     }
 }

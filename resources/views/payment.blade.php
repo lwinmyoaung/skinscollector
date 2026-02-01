@@ -11,7 +11,25 @@
                 </div>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('kpay.order.submit') }}" enctype="multipart/form-data" id="paymentForm">
+                {{-- Order Summary --}}
+                <div class="alert alert-light border mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Item:</span>
+                        <span class="fw-semibold">{{ $order['product_name'] ?? 'Product' }}</span>
+                    </div>
+                    @if(($order['quantity'] ?? 1) > 1)
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted small">Quantity:</span>
+                        <span class="fw-semibold">{{ $order['quantity'] }}</span>
+                    </div>
+                    @endif
+                    <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+                        <span class="fw-bold">Total Amount:</span>
+                        <span class="fw-bold text-primary">{{ number_format($order['amount']) }} Ks</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ route('payment.submit') }}" enctype="multipart/form-data" id="paymentForm">
                     @csrf
                     <input type="hidden" name="game_type" value="{{ $order['game_type'] }}">
                     <input type="hidden" name="product_id" value="{{ $order['product_id'] }}">
@@ -19,6 +37,7 @@
                     <input type="hidden" name="player_id" value="{{ $order['player_id'] }}">
                     <input type="hidden" name="server_id" value="{{ $order['server_id'] }}">
                     <input type="hidden" name="region" value="{{ $order['region'] }}">
+                    <input type="hidden" name="quantity" value="{{ $order['quantity'] ?? 1 }}">
 
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Payment Method</label>
@@ -41,7 +60,7 @@
                                          alt="Payment Method"
                                          class="rounded border img-fluid"
                                          style="max-width: 300px; height:auto; object-fit:contain;"
-                                         onerror="this.src='https://placehold.co/400x300?text=No+Image'">
+                                         onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
                                     <div class="w-100">
                                         <div class="fw-semibold" id="payment_method_name"></div>
                                         <div class="small text-muted d-flex flex-wrap align-items-center gap-2 mt-2">
@@ -85,7 +104,10 @@
                     </div>
 
                     <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">‌ငွေပေးချေခြင်းအတည်ပြုမည်</button>
+                        <button type="submit" class="btn btn-primary btn-lg" id="paymentSubmitBtn">
+                            <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                            <span class="btn-text">‌ငွေပေးချေခြင်းအတည်ပြုမည်</span>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -183,6 +205,36 @@
         }
 
         updatePaymentPreview();
+
+        // Handle Form Submission Loading State
+        var paymentForm = document.getElementById('paymentForm');
+        var submitBtn = document.getElementById('paymentSubmitBtn');
+        
+        if (paymentForm && submitBtn) {
+            paymentForm.addEventListener('submit', function(e) {
+                // If form is valid, show loading
+                if (this.checkValidity()) {
+                    var spinner = submitBtn.querySelector('.spinner-border');
+                    var btnText = submitBtn.querySelector('.btn-text');
+                    
+                    if (spinner) spinner.classList.remove('d-none');
+                    if (btnText) btnText.textContent = 'Processing...';
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+
+        // Reset button state if page is loaded from bfcache (back/forward cache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted && submitBtn) {
+                var spinner = submitBtn.querySelector('.spinner-border');
+                var btnText = submitBtn.querySelector('.btn-text');
+                
+                if (spinner) spinner.classList.add('d-none');
+                if (btnText) btnText.textContent = '‌ငွေပေးချေခြင်းအတည်ပြုမည်';
+                submitBtn.disabled = false;
+            }
+        });
     });
 </script>
 @endsection

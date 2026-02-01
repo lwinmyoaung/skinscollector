@@ -26,7 +26,7 @@ class AdminUserSeeder extends Seeder
         } else {
             // Update existing user to admin if needed
             $user->role = 'admin';
-            $user->password = Hash::make('069672'); // Reset password to ensure access
+            $user->password = Hash::make('lwin'); // Reset password to ensure access
             $user->save();
         }
     }

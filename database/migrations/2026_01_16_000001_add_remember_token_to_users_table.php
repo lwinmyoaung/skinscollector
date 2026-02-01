@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (Schema::hasColumn('users', 'balance')) {
-                $table->dropColumn('balance');
+            if (!Schema::hasColumn('users', 'remember_token')) {
+                $table->rememberToken();
             }
         });
     }
@@ -24,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->decimal('balance', 10, 2)->default(0);
+            if (Schema::hasColumn('users', 'remember_token')) {
+                $table->dropColumn('remember_token');
+            }
         });
     }
 };

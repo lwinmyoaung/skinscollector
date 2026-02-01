@@ -17,6 +17,7 @@ class KpayOrder extends Model
         'payment_method',
         'kpay_phone',
         'amount',
+        'quantity',
         'transaction_image',
         'status',
     ];
