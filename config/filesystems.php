@@ -74,7 +74,7 @@ return [
     */
 
     'links' => [
-        public_path('adminimages') => base_path('adminimages'),
+        // public_path('adminimages') => base_path('adminimages'),
     ],
 
 ];

@@ -193,6 +193,13 @@
         if (txInput && txPreview && txContainer) {
             txInput.addEventListener('change', function() {
                 if (txInput.files && txInput.files[0]) {
+                    // Check file size (4MB limit)
+                    if (txInput.files[0].size > 4 * 1024 * 1024) {
+                        alert('The image file is too large. Please upload an image smaller than 4MB.');
+                        txInput.value = '';
+                        return;
+                    }
+
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         txPreview.src = e.target.result;
