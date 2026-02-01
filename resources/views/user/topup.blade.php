@@ -166,9 +166,9 @@
 
     function previewTransactionImage(input) {
         if (input.files && input.files[0]) {
-            // Check file size (5MB limit)
-            if (input.files[0].size > 5 * 1024 * 1024) {
-                alert('The image file is too large. Please upload an image smaller than 5MB.');
+            // Check file size (10MB limit)
+            if (input.files[0].size > 10 * 1024 * 1024) {
+                alert('The image file is too large. Please upload an image smaller than 10MB.');
                 input.value = '';
                 return;
             }

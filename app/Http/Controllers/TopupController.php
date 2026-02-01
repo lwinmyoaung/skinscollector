@@ -37,7 +37,7 @@ class TopupController extends Controller
         $request->validate([
             'topupamount' => 'required|numeric|min:1',
             'payment_method' => 'required',
-            'transaction_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'transaction_image' => 'required|image|mimes:jpg,jpeg,png,webp|max:10240',
         ]);
 
         // 2️⃣ Upload transaction image
