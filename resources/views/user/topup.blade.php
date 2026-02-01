@@ -49,7 +49,7 @@
                     <option value="">Select Payment Method</option>
                     @foreach($paymentMethods as $pm)
                         <option value="{{ $pm->name }}"
-                                data-image="{{ asset('storage/images/paymentmethodphoto/'.$pm->image) }}"
+                                data-image="{{ asset('adminimages/images/paymentmethodphoto/'.$pm->image) }}"
                                 data-phone="{{ $pm->phone_number }}">
                             {{ $pm->name }}
                         </option>

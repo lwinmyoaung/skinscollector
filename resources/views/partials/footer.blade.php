@@ -3,7 +3,7 @@
         <div class="row">
             <div class="col-lg-4 mb-4">
                 <a href="{{ url('/') }}" class="mg-footer-brand">
-                    <img src="{{ asset('storage/logo/skincollector.jpg') }}" alt="{{ config('app.name', 'Skins Collector') }}" loading="lazy">
+                    <img src="{{ asset('adminimages/logo/skincollector.jpg') }}" alt="{{ config('app.name', 'Skins Collector') }}" loading="lazy">
                 </a>
                 <span>{{ config('app.name', 'Skins Collector') }}</span>
                 <p class="mg-footer-desc">

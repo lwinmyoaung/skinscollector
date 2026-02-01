@@ -40,8 +40,8 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'root' => base_path('adminimages'),
+            'url' => env('APP_URL').'/adminimages',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -74,7 +74,7 @@ return [
     */
 
     'links' => [
-        // public_path('adminimages') => base_path('adminimages'),
+        public_path('adminimages') => base_path('adminimages'),
     ],
 
 ];

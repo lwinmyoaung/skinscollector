@@ -68,7 +68,7 @@ class AccountController extends Controller
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('storage/'.$file),
+                    'url' => asset('adminimages/'.$file),
                     'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
                     'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
                 ];
@@ -89,7 +89,7 @@ class AccountController extends Controller
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('storage/'.$file),
+                    'url' => asset('adminimages/'.$file),
                     'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
                     'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
                 ];
@@ -112,7 +112,7 @@ class AccountController extends Controller
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('storage/'.$file),
+                    'url' => asset('adminimages/'.$file),
                     'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
                     'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
                 ];
