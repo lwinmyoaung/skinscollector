@@ -43,11 +43,11 @@
         </div>
 
         <nav class="admin-nav">
-            <a href="{{ route('admin.confirm.orders') }}" class="admin-nav-link {{ request()->routeIs('admin.confirm.orders') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Orders</span>
             </a>
-            <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.ads') }}" class="admin-nav-link {{ request()->routeIs('admin.ads') ? 'active' : '' }}">
                 <i class="fas fa-images"></i>
                 <span>Ads Manager</span>
             </a>

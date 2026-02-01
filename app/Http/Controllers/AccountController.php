@@ -140,7 +140,7 @@ class AccountController extends Controller
             $image->store('ads/slides', 'public');
         }
 
-        return redirect()->route('admin.dashboard')->with('success', 'Slides uploaded successfully.');
+        return redirect()->route('admin.ads')->with('success', 'Slides uploaded successfully.');
     }
 
     public function advertiseDestroy(string $filename)
@@ -155,7 +155,7 @@ class AccountController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
         }
 
-        return redirect()->route('admin.dashboard')->with('success', 'Slide deleted successfully.');
+        return redirect()->route('admin.ads')->with('success', 'Slide deleted successfully.');
     }
 
     public function entryAdStore(Request $request)
@@ -177,7 +177,7 @@ class AccountController extends Controller
 
         $validated['entry_image']->store($directory, 'public');
 
-        return redirect()->route('admin.dashboard')->with('success', 'Entry ad image updated successfully.');
+        return redirect()->route('admin.ads')->with('success', 'Entry ad image updated successfully.');
     }
 
     public function entryAdDestroy()
@@ -191,7 +191,7 @@ class AccountController extends Controller
             }
         }
 
-        return redirect()->route('admin.dashboard')->with('success', 'Entry ad image removed successfully.');
+        return redirect()->route('admin.ads')->with('success', 'Entry ad image removed successfully.');
     }
 
     public function appIconStore(Request $request)

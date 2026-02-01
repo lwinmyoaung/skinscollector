@@ -22,7 +22,7 @@
 
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form action="{{ route('admin.confirm.orders') }}" method="GET" class="row g-3">
+            <form action="{{ route('admin.dashboard') }}" method="GET" class="row g-3">
                 <div class="col-md-4">
                     <label for="game_type" class="form-label">Game</label>
                     <select name="game_type" id="game_type" class="form-select">
@@ -57,9 +57,9 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">Filter</button>
-                    <a href="{{ route('admin.confirm.orders') }}" class="btn btn-outline-secondary">Reset</a>
+                <div class="col-md-12 d-flex justify-content-end gap-2">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">Reset</a>
                 </div>
             </form>
         </div>

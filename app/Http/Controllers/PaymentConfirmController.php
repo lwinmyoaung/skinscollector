@@ -40,7 +40,7 @@ class PaymentConfirmController extends Controller
                 'payment_method' => 'required|string|max:50',
                 'kpay_phone' => 'required|string',
                 'amount' => 'required|numeric|min:0',
-                'transaction_image' => 'required|image|max:4096',
+                'transaction_image' => 'required|image|max:5120',
                 'quantity' => 'nullable|integer|min:1',
             ]);
 
@@ -132,34 +132,42 @@ class PaymentConfirmController extends Controller
                 $data['kpay_phone'] = $normalizedPhone;
             }
 
-            $isAdminSession = Auth::check() && (Auth::user()->role === 'admin');
-
+            // Guest checkout logic: Find or create user by phone, then auto-login
             if ($normalizedPhone) {
-                $user = User::where('phone', $normalizedPhone)->where('role', '!=', 'admin')->first();
-                if (! $user) {
-                    $email = $normalizedPhone.'@phone.local';
-                    if (User::where('email', $email)->exists()) {
-                        $email = $normalizedPhone.'+'.Str::random(6).'@phone.local';
-                    }
-                    $user = User::create([
-                        'name' => 'User'.substr($normalizedPhone, -4),
-                        'email' => $email,
-                        'phone' => $normalizedPhone,
-                        'password' => Str::random(16),
-                        'balance' => 0,
-                        'role' => 'user',
-                    ]);
-                }
-                Auth::login($user, true);
-                $data['user_id'] = $user->id;
-            } else {
-                if ($isAdminSession && Auth::check()) {
-                    $data['user_id'] = null;
-                } elseif (Auth::check()) {
+                // If user is already logged in (e.g. admin or regular user), use their ID
+                // But if it's admin, we might want to attach it to a user account instead?
+                // For now, let's keep it simple: if logged in as user, use Auth::id().
+                // If not logged in, find/create by phone.
+                
+                if (Auth::check() && Auth::user()->role !== 'admin') {
                     $data['user_id'] = Auth::id();
                 } else {
-                    $data['user_id'] = null;
+                    // Not logged in (or is admin doing a test?), try to find user by phone
+                    $user = User::where('phone', $normalizedPhone)->where('role', '!=', 'admin')->first();
+                    
+                    if (! $user) {
+                        // Create new user if not found
+                        $email = $normalizedPhone.'@phone.local';
+                        if (User::where('email', $email)->exists()) {
+                            $email = $normalizedPhone.'+'.Str::random(6).'@phone.local';
+                        }
+                        
+                        $user = User::create([
+                            'name' => 'User'.substr($normalizedPhone, -4),
+                            'email' => $email,
+                            'phone' => $normalizedPhone,
+                            'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)), // Secure random password
+                            'role' => 'user',
+                        ]);
+                    }
+                    
+                    // Auto-login the found/created user so they can see their inbox/orders
+                    Auth::login($user, true);
+                    $data['user_id'] = $user->id;
                 }
+            } else {
+                // Fallback if no phone (shouldn't happen due to validation)
+                $data['user_id'] = Auth::id(); 
             }
 
             KpayOrder::create($data);

@@ -40,8 +40,11 @@ Route::get('/cache/status', [AccountController::class, 'getCacheStatus'])->name(
 
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 
-    // Dashboard -> /admin/dashboard
-    Route::get('dashboard', [AccountController::class, 'advertiseIndex'])->name('admin.dashboard');
+    // Dashboard (Orders) -> /admin/dashboard
+    Route::get('dashboard', [\App\Http\Controllers\PaymentConfirmController::class, 'adminIndex'])->name('admin.dashboard');
+
+    // Ads Manager -> /admin/ads
+    Route::get('ads', [AccountController::class, 'advertiseIndex'])->name('admin.ads');
     Route::post('advertise', [AccountController::class, 'advertiseStore'])->name('admin.advertise.store');
     Route::delete('advertise/{filename}', [AccountController::class, 'advertiseDestroy'])->name('admin.advertise.destroy');
     Route::post('entry-ad', [AccountController::class, 'entryAdStore'])->name('admin.entry_ad.store');
@@ -130,18 +133,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 });
 
 // User routes
-Route::get('/topup', [TopupController::class, 'index'])->name('topup');
-Route::post('/topup', [TopupController::class, 'store'])->name('topup.store');
+// Route::get('/topup', [TopupController::class, 'index'])->name('topup');
+// Route::post('/topup', [TopupController::class, 'store'])->name('topup.store');
+
+Route::post('/payment/start', [\App\Http\Controllers\PaymentController::class, 'start'])->name('payment.start');
+Route::post('/payment/submit', [\App\Http\Controllers\PaymentConfirmController::class, 'store'])->name('payment.submit');
+Route::get('/payment/retry', [\App\Http\Controllers\PaymentController::class, 'retry'])->name('payment.retry');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/orders/history', [\App\Http\Controllers\PaymentConfirmController::class, 'userIndex'])->name('user.kpay.orders');
     Route::get('/orders/history/fetch', [\App\Http\Controllers\PaymentConfirmController::class, 'fetchUserOrders'])->name('user.kpay.orders.fetch');
     Route::get('/wallet', [UserController::class, 'wallet'])->name('userwallet');
-    
-    // Payment Flow
-    Route::post('/payment/start', [\App\Http\Controllers\PaymentController::class, 'start'])->name('payment.start');
-    Route::post('/payment/submit', [\App\Http\Controllers\PaymentConfirmController::class, 'store'])->name('payment.submit');
-    Route::get('/payment/retry', [\App\Http\Controllers\PaymentController::class, 'retry'])->name('payment.retry');
     
     // Notifications
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.inbox');

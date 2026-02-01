@@ -132,7 +132,7 @@
                     @auth
                         @if(auth()->user()->role === 'admin')
                             <div class="position-relative me-3">
-                                <a href="{{ route('admin.confirm.orders') }}" class="mg-mobile-icon-btn" id="mobile-orders-btn">
+                                <a href="{{ route('admin.dashboard') }}" class="mg-mobile-icon-btn" id="mobile-orders-btn">
                                     <i class="fas fa-money-bill-wave"></i>
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="mobile-admin-orders-badge" style="display: none; font-size: 0.6rem;">0</span>
                                 </a>
@@ -607,7 +607,7 @@
                         const rows = doc.querySelectorAll('tr');
                         
                         let html = '';
-                        const adminOrdersUrl = "{{ route('admin.confirm.orders') }}";
+                        const adminOrdersUrl = "{{ route('admin.dashboard') }}";
                         
                         if (rows.length === 0 || count === 0) {
                              html = '<div class="text-center py-3 text-muted"><small>No pending orders</small></div>';
