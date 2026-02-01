@@ -65,7 +65,7 @@
             @else
                 <div class="text-muted small">No app icon set yet.</div>
             @endif
-            <div class="text-muted small mt-2">This icon will be stored in adminimages/logo/.</div>
+            <div class="text-muted small mt-2">This icon will be stored in storage/logo/.</div>
         </div>
     </div>
 

@@ -45,7 +45,7 @@
                             <option value="">Select Payment Method</option>
                             @foreach(($paymentMethods ?? []) as $pm)
                                 <option value="{{ strtolower($pm->name) }}"
-                                        data-image="{{ asset('adminimages/images/paymentmethodphoto/' . $pm->image) }}"
+                                        data-image="{{ asset('storage/images/paymentmethodphoto/' . $pm->image) }}"
                                         data-phone="{{ $pm->phone_number }}"
                                         {{ strtolower($pm->name) === 'kpay' ? 'selected' : '' }}>
                                     {{ $pm->name }}
