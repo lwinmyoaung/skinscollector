@@ -1,7 +1,8 @@
 @props(['gameKey', 'title', 'subtitle' => 'Instant Top Up', 'steps' => ['Enter User ID', 'Select Items', 'Complete Payment'], 'imageDefault' => 'photo/sora.jpg'])
 
 @php
-    $imagePath = $gameImages[$gameKey]->image_path ?? $imageDefault;
+    $dbPath = $gameImages[$gameKey]->image_path ?? null;
+    $imagePath = ($dbPath && $dbPath !== '0') ? $dbPath : $imageDefault;
 @endphp
 
 {{-- HEADER --}}
