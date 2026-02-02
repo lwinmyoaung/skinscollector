@@ -140,7 +140,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="layout-entry-ad-backdrop"></div>
                     <div class="layout-entry-ad-container">
                         <button type="button" class="btn-close layout-entry-ad-close" aria-label="Close"></button>
-                        <img src="{{ asset('adminimages/'.$layoutEntryAdPath) }}" alt="Advertisement" class="layout-entry-ad-image">
+                        <img src="{{ asset('adminimages/'.$layoutEntryAdPath) }}" alt="Advertisement" class="layout-entry-ad-image" fetchpriority="high" decoding="async">
                     </div>
                 </div>
                 <style>

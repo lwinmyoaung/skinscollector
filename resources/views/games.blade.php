@@ -19,7 +19,7 @@
             <div class="carousel-inner">
                 @foreach($advertiseSlides as $i => $slidePath)
                     <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
-                        <img src="{{ asset('adminimages/'.$slidePath) }}" class="d-block w-100" alt="Promotion banner {{ $i + 1 }}" loading="lazy">
+                        <img src="{{ asset('adminimages/'.$slidePath) }}" class="d-block w-100" alt="Promotion banner {{ $i + 1 }}" @if($i === 0) fetchpriority="high" @else loading="lazy" @endif>
                     </div>
                 @endforeach
             </div>
@@ -48,7 +48,7 @@
                 <div class="product-image-container">
                     <a href="{{ route('mlproducts') }}">
                         <img src="{{ asset('adminimages/' . ($gameImages->get('mlbb')?->image_path ?: 'photo/sora.jpg')) }}" 
-                            alt="Mobile Legend:Bang Bang" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22400%22%20viewBox%3D%220%200%20600%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2230%22%20fill%3D%22%236c757d%22%3EMLBB%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                            alt="Mobile Legend:Bang Bang" class="product-image" decoding="async" loading="lazy" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22600%22%20height%3D%22400%22%20viewBox%3D%220%200%20600%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2230%22%20fill%3D%22%236c757d%22%3EMLBB%3C%2Ftext%3E%3C%2Fsvg%3E'">
                     </a>
                     
                     <div class="platform-icons">
@@ -112,7 +112,7 @@
                 <div class="product-image-container">
                     <a href="{{ route('pubg') }}">
                         <img src="{{ asset('adminimages/' . ($gameImages->get('pubg')?->image_path ?: 'photo/pubg.jpg')) }}" 
-                            alt="PUBG Mobile (UC)" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='https://placehold.co/600x400?text=PUBG'">
+                            alt="PUBG Mobile (UC)" class="product-image" decoding="async" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=PUBG'">
                     </a>
                     <div class="platform-icons">
                         <span class="platform-icon" title="Mobile">
@@ -146,7 +146,7 @@
                 <div class="product-image-container">
                     <a href="{{ route('wwm') }}">
                         <img src="{{ asset('adminimages/' . ($gameImages->get('wwm')?->image_path ?: 'photo/wwm.jpg')) }}" 
-                            alt="WWM" class="product-image" decoding="async" fetchpriority="high" onerror="this.src='https://placehold.co/600x400?text=WWM'">
+                            alt="WWM" class="product-image" decoding="async" loading="lazy" onerror="this.src='https://placehold.co/600x400?text=WWM'">
                     </a>
                     <div class="platform-icons">
                         <span class="platform-icon" title="Mobile">
