@@ -155,7 +155,7 @@
                                     {{ number_format(($slide['size'] ?? 0) / 1024, 0) }} KB
                                 </td>
                                 <td class="text-end pe-4">
-                                    <form action="{{ route('admin.advertise.destroy', ['filename' => $slide['name']]) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('admin.advertise.destroy', ['filename' => bin2hex($slide['name'])]) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this slide?');">

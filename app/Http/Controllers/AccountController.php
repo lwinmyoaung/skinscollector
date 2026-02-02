@@ -152,6 +152,14 @@ class AccountController extends Controller
 
     public function advertiseDestroy(string $filename)
     {
+        // Decode filename if it's hex encoded (to avoid Nginx 404 on dot files)
+        if (ctype_xdigit($filename) && strlen($filename) % 2 === 0) {
+            $decoded = hex2bin($filename);
+            if ($decoded !== false) {
+                $filename = $decoded;
+            }
+        }
+
         if ($filename !== basename($filename)) {
             abort(400);
         }
