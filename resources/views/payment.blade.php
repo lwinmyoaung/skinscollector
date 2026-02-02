@@ -314,7 +314,12 @@
                             type: 'image/jpeg',
                             lastModified: Date.now()
                         });
-                        resolve(compressedFile);
+                        
+                        // Force a tiny delay to ensure the browser registers the file change before any immediate submit
+                        // This helps with some mobile browsers that might be slow to update the file input
+                        setTimeout(() => {
+                            resolve(compressedFile);
+                        }, 100);
                     }, 'image/jpeg', quality);
                 };
                 img.onerror = function(error) {
