@@ -42,10 +42,7 @@
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
 
     <!-- Preload Critical Assets -->
-    <link rel="preload" href="{{ asset('css/custom.css') }}" as="style">
-    <link rel="preload" href="{{ asset('css/alert-card.css') }}" as="style">
-    <link rel="preload" href="{{ asset('js/custom.js') }}" as="script">
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style" crossorigin="anonymous">
 
     <!-- SEO Meta Tags -->
     <title>@yield('title', config('app.name', 'Skins Collector').' - Game Top Up & Digital Products')</title>
