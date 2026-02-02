@@ -7,9 +7,13 @@ use App\Models\TopUp;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use App\Traits\ImageUploadTrait;
 
 class TopupController extends Controller
 {
+    use ImageUploadTrait;
+
     /**
      * Display a listing of the resource.
      */
@@ -41,8 +45,10 @@ class TopupController extends Controller
         ]);
 
         // 2️⃣ Upload transaction image
-        $imagePath = $request->file('transaction_image')
-            ->store('topups', 'public');
+        $file = $request->file('transaction_image');
+        $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
+        $this->optimizeAndStoreImage($file, 'topups', $filename);
+        $imagePath = 'topups/' . $filename;
 
         // 3️⃣ Save topup record (PENDING)
         TopUp::create([

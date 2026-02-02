@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
+use App\Traits\ImageUploadTrait;
 use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
+    use ImageUploadTrait;
+
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
@@ -42,7 +45,7 @@ class ImageController extends Controller
 
         // Image Upload
         $imageName = date('YmdHis').'.'.request()->image->getClientOriginalExtension();
-        request()->image->storeAs('images/paymentmethodphoto', $imageName, 'public');
+        $this->optimizeAndStoreImage(request()->image, 'images/paymentmethodphoto', $imageName);
 
         $pm->image = $imageName;
         $pm->save();
@@ -79,7 +82,7 @@ class ImageController extends Controller
         if ($request->image) {
             // Image Upload
             $imageName = date('YmdHis').'.'.request()->image->getClientOriginalExtension();
-            request()->image->storeAs('images/paymentmethodphoto', $imageName, 'public');
+            $this->optimizeAndStoreImage(request()->image, 'images/paymentmethodphoto', $imageName);
             $paymentmethod->image = $imageName;
         }
 

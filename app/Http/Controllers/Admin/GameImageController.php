@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\GameImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use App\Traits\ImageUploadTrait;
 
 class GameImageController extends Controller
 {
+    use ImageUploadTrait;
+
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
@@ -35,7 +39,13 @@ class GameImageController extends Controller
         $game = GameImage::findOrFail($id);
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('photo', 'public');
+            $file = $request->file('image');
+            $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
+            $directory = 'photo';
+            
+            $this->optimizeAndStoreImage($file, $directory, $filename);
+            
+            $path = $directory . '/' . $filename;
             
             // Delete old image if it exists
             if ($game->image_path && Storage::disk('public')->exists($game->image_path)) {

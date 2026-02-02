@@ -25,9 +25,12 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use App\Traits\ImageUploadTrait;
 
 class PaymentConfirmController extends Controller
 {
+    use ImageUploadTrait;
+
     public function store(Request $request)
     {
         try {
@@ -537,83 +540,5 @@ class PaymentConfirmController extends Controller
             'count' => $count,
             'orders' => $orders,
         ]);
-    }
-
-    private function optimizeAndStoreImage($file, $path, $filename)
-    {
-        if (! extension_loaded('gd')) {
-            $file->storeAs($path, $filename, 'public');
-            return;
-        }
-
-        try {
-            $sourcePath = $file->getPathname();
-            $extension = strtolower($file->getClientOriginalExtension());
-            list($width, $height) = getimagesize($sourcePath);
-            
-            $maxWidth = 1000; // Resize large images to max 1000px width
-
-            if ($width > $maxWidth) {
-                $newWidth = $maxWidth;
-                $newHeight = (int) ($height * ($newWidth / $width));
-                
-                $image_p = imagecreatetruecolor($newWidth, $newHeight);
-                $image = null;
-
-                switch ($extension) {
-                    case 'jpg':
-                    case 'jpeg':
-                        $image = imagecreatefromjpeg($sourcePath);
-                        break;
-                    case 'png':
-                        $image = imagecreatefrompng($sourcePath);
-                        imagealphablending($image_p, false);
-                        imagesavealpha($image_p, true);
-                        break;
-                    case 'gif':
-                        $image = imagecreatefromgif($sourcePath);
-                        break;
-                    case 'webp':
-                        if (function_exists('imagecreatefromwebp')) {
-                            $image = imagecreatefromwebp($sourcePath);
-                        }
-                        break;
-                }
-
-                if ($image) {
-                    imagecopyresampled($image_p, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                    
-                    $tempPath = tempnam(sys_get_temp_dir(), 'img_');
-                    
-                    switch ($extension) {
-                        case 'jpg':
-                        case 'jpeg':
-                            imagejpeg($image_p, $tempPath, 85);
-                            break;
-                        case 'png':
-                            imagepng($image_p, $tempPath, 8);
-                            break;
-                        case 'gif':
-                            imagegif($image_p, $tempPath);
-                            break;
-                        case 'webp':
-                            imagewebp($image_p, $tempPath, 85);
-                            break;
-                    }
-
-                    \Illuminate\Support\Facades\Storage::disk('public')->putFileAs($path, new \Illuminate\Http\File($tempPath), $filename);
-                    
-                    imagedestroy($image_p);
-                    imagedestroy($image);
-                    @unlink($tempPath);
-                    return;
-                }
-            }
-        } catch (\Exception $e) {
-            Log::warning('Image optimization failed, falling back to original: ' . $e->getMessage());
-        }
-
-        // Fallback
-        $file->storeAs($path, $filename, 'public');
     }
 }

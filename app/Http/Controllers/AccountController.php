@@ -22,9 +22,13 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use App\Traits\ImageUploadTrait;
 
 class AccountController extends Controller
 {
+    use ImageUploadTrait;
+
     /**
      * Display a listing of the resource.
      */
@@ -137,7 +141,8 @@ class AccountController extends Controller
         ]);
 
         foreach ($validated['images'] as $image) {
-            $image->store('ads/slides', 'public');
+            $filename = Str::random(40) . '.' . $image->getClientOriginalExtension();
+            $this->optimizeAndStoreImage($image, 'ads/slides', $filename);
         }
 
         return redirect()->route('admin.ads')->with('success', 'Slides uploaded successfully.');
@@ -175,7 +180,8 @@ class AccountController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
         }
 
-        $validated['entry_image']->store($directory, 'public');
+        $filename = Str::random(40) . '.' . $validated['entry_image']->getClientOriginalExtension();
+        $this->optimizeAndStoreImage($validated['entry_image'], $directory, $filename);
 
         return redirect()->route('admin.ads')->with('success', 'Entry ad image updated successfully.');
     }
@@ -211,7 +217,8 @@ class AccountController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
         }
 
-        $validated['app_icon']->store($directory, 'public');
+        $filename = Str::random(40) . '.' . $validated['app_icon']->getClientOriginalExtension();
+        $this->optimizeAndStoreImage($validated['app_icon'], $directory, $filename);
 
         return redirect()->route('admin.dashboard')->with('success', 'App icon updated successfully.');
     }
