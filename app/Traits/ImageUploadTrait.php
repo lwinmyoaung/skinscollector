@@ -17,8 +17,11 @@ trait ImageUploadTrait
      * @param int $maxWidth
      * @return void
      */
-    public function optimizeAndStoreImage($file, $path, $filename, $maxWidth = 5000)
+    public function optimizeAndStoreImage($file, $path, $filename, $maxWidth = 1920)
     {
+        // Standard Web Limit: 1920px (Full HD)
+        // If user provided a larger limit, we respect it, but default to 1920 for "Standard Fasting"
+        
         if (! extension_loaded('gd')) {
             $file->storeAs($path, $filename, 'public');
             return;
@@ -29,8 +32,7 @@ trait ImageUploadTrait
             $extension = strtolower($file->getClientOriginalExtension());
             list($width, $height) = getimagesize($sourcePath);
 
-            // Only resize if the image is HUGE (larger than 5000px)
-            // Otherwise, keep original size as requested
+            // Calculate new dimensions
             if ($width > $maxWidth) {
                 $newWidth = $maxWidth;
                 $newHeight = (int) ($height * ($newWidth / $width));
@@ -63,24 +65,29 @@ trait ImageUploadTrait
             }
 
             if ($image) {
+                // Resample
                 imagecopyresampled($image_p, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
                 
                 $tempPath = tempnam(sys_get_temp_dir(), 'img_');
                 
+                // SAVE OPTIMIZED
                 switch ($extension) {
                     case 'jpg':
                     case 'jpeg':
-                        imageinterlace($image_p, true); // Enable Progressive JPEG
-                        imagejpeg($image_p, $tempPath, 90); // Quality 90 (High Quality)
+                        imageinterlace($image_p, true); // Progressive JPEG (Loads faster visually)
+                        imagejpeg($image_p, $tempPath, 80); // Quality 80 (Standard Web Balance)
                         break;
                     case 'png':
-                        imagepng($image_p, $tempPath, 4); // Low compression (faster save)
+                        // PNGs are often huge. If it doesn't have transparency, JPEG is better, 
+                        // but we must keep extension. 
+                        // Compress level 6 (0-9).
+                        imagepng($image_p, $tempPath, 6); 
                         break;
                     case 'gif':
                         imagegif($image_p, $tempPath);
                         break;
                     case 'webp':
-                        imagewebp($image_p, $tempPath, 90); // Quality 90
+                        imagewebp($image_p, $tempPath, 80); // Quality 80
                         break;
                 }
 

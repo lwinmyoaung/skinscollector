@@ -12,7 +12,7 @@ class OptimizeImages extends Command
      *
      * @var string
      */
-    protected $signature = 'optimize:images {--path= : Specific path to optimize inside adminimages}';
+    protected $signature = 'optimize:images {--path= : Specific path to optimize inside adminimages} {--force : Optimize even small images}';
 
     /**
      * The console command description.
@@ -26,6 +26,8 @@ class OptimizeImages extends Command
      */
     public function handle()
     {
+        ini_set('memory_limit', '1024M'); // Increase memory for large image processing
+
         if (!extension_loaded('gd')) {
             $this->error('GD extension is not loaded. Please enable it in php.ini to optimize images.');
             return 1;
@@ -47,32 +49,36 @@ class OptimizeImages extends Command
         $files = File::allFiles($basePath);
         $count = 0;
         $totalSaved = 0;
+        $errors = 0;
 
         $bar = $this->output->createProgressBar(count($files));
         $bar->start();
 
         foreach ($files as $file) {
             $extension = strtolower($file->getExtension());
-            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
+            if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
                 $bar->advance();
                 continue;
             }
 
+            $realPath = $file->getRealPath();
             $size = $file->getSize(); // bytes
-            // Skip if smaller than 300KB
-            if ($size < 300 * 1024) {
+
+            // Skip if smaller than 100KB unless --force is used
+            if ($size < 100 * 1024 && !$this->option('force')) {
                 $bar->advance();
                 continue;
             }
 
             try {
-                $this->optimizeImage($file->getRealPath(), $extension);
-                $newSize = filesize($file->getRealPath());
-                $saved = $size - $newSize;
-                $totalSaved += $saved;
-                $count++;
+                $savedBytes = $this->optimizeImage($realPath, $extension);
+                if ($savedBytes > 0) {
+                    $totalSaved += $savedBytes;
+                    $count++;
+                }
             } catch (\Exception $e) {
-                // Log error but continue
+                // $this->error("Error optimizing " . $file->getFilename() . ": " . $e->getMessage());
+                $errors++;
             }
 
             $bar->advance();
@@ -85,68 +91,130 @@ class OptimizeImages extends Command
         $this->info("Optimization complete!");
         $this->info("Optimized $count images.");
         $this->info("Saved total: $savedMb MB.");
+        if ($errors > 0) {
+            $this->warn("Encountered $errors errors (likely corrupted files or unsupported formats).");
+        }
 
         return 0;
     }
 
     private function optimizeImage($path, $extension)
     {
-        list($width, $height) = getimagesize($path);
+        $originalSize = filesize($path);
         
-        // Target max width
-        $maxWidth = 1200;
-        
-        $newWidth = $width;
-        $newHeight = $height;
+        // Detect REAL mime type to handle mismatched extensions
+        $imageInfo = @getimagesize($path);
+        if (!$imageInfo) {
+            return 0; // Not a valid image
+        }
 
+        $mime = $imageInfo['mime'];
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+
+        // Max width standard
+        $maxWidth = 1920;
+
+        // Create resource based on REAL mime type
+        $image = null;
+        switch ($mime) {
+            case 'image/jpeg':
+                $image = imagecreatefromjpeg($path);
+                break;
+            case 'image/png':
+                $image = imagecreatefrompng($path);
+                break;
+            case 'image/gif':
+                $image = imagecreatefromgif($path);
+                break;
+            case 'image/webp':
+                if (function_exists('imagecreatefromwebp')) {
+                    $image = imagecreatefromwebp($path);
+                }
+                break;
+        }
+
+        if (!$image) {
+            return 0;
+        }
+
+        // Calculate new dimensions
         if ($width > $maxWidth) {
-            $ratio = $maxWidth / $width;
             $newWidth = $maxWidth;
-            $newHeight = $height * $ratio;
+            $newHeight = (int) ($height * ($newWidth / $width));
+        } else {
+            $newWidth = $width;
+            $newHeight = $height;
         }
 
-        $src = null;
+        $image_p = imagecreatetruecolor($newWidth, $newHeight);
+
+        // Preserve transparency for PNG/WebP/GIF
+        if ($mime == 'image/png' || $mime == 'image/webp' || $mime == 'image/gif') {
+            imagealphablending($image_p, false);
+            imagesavealpha($image_p, true);
+        }
+
+        // Resample
+        imagecopyresampled($image_p, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+        // Save based on FILE EXTENSION (to fix mismatches and keep links working)
+        // If file is .jpg but was PNG, we convert to JPEG (saving space)
+        // If file is .png but was JPEG, we convert to PNG (safe)
+        
+        $tempPath = $path . '.tmp';
+        $saved = false;
+
         switch ($extension) {
             case 'jpg':
             case 'jpeg':
-                $src = \imagecreatefromjpeg($path);
+                // Convert to JPEG (even if source was PNG)
+                // Fill background with white if source had transparency
+                if ($mime == 'image/png' || $mime == 'image/gif') {
+                    $bg = imagecreatetruecolor($newWidth, $newHeight);
+                    $white = imagecolorallocate($bg, 255, 255, 255);
+                    imagefill($bg, 0, 0, $white);
+                    imagecopyresampled($bg, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    imagedestroy($image_p);
+                    $image_p = $bg;
+                }
+                
+                imageinterlace($image_p, true); // Progressive
+                imagejpeg($image_p, $tempPath, 80);
+                $saved = true;
                 break;
+                
             case 'png':
-                $src = \imagecreatefrompng($path);
+                imagepng($image_p, $tempPath, 6);
+                $saved = true;
                 break;
+                
+            case 'gif':
+                imagegif($image_p, $tempPath);
+                $saved = true;
+                break;
+                
             case 'webp':
-                $src = \imagecreatefromwebp($path);
+                imagewebp($image_p, $tempPath, 80);
+                $saved = true;
                 break;
         }
 
-        if (!$src) return;
+        imagedestroy($image);
+        imagedestroy($image_p);
 
-        $dst = \imagecreatetruecolor($newWidth, $newHeight);
-
-        // Handle transparency for PNG/WebP
-        if ($extension == 'png' || $extension == 'webp') {
-            \imagecolortransparent($dst, \imagecolorallocatealpha($dst, 0, 0, 0, 127));
-            \imagealphablending($dst, false);
-            \imagesavealpha($dst, true);
+        if ($saved && file_exists($tempPath)) {
+            $newSize = filesize($tempPath);
+            // Only replace if we saved space or if we fixed dimensions
+            // Or if we fixed a mime-type mismatch (which we can't easily track here but assuming optimization is good)
+            if ($newSize < $originalSize || $width > $maxWidth) {
+                rename($tempPath, $path);
+                return $originalSize - $newSize;
+            } else {
+                @unlink($tempPath);
+            }
         }
 
-        \imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-
-        // Save
-        switch ($extension) {
-            case 'jpg':
-            case 'jpeg':
-                \imagejpeg($dst, $path, 80); // 80% quality
-                break;
-            case 'png':
-                \imagepng($dst, $path, 8); 
-                break;
-            case 'webp':
-                \imagewebp($dst, $path, 80);
-                break;
-        }
-
-        \imagedestroy($src);
-        \imagedestroy($dst);
+        return 0;
     }
 }
