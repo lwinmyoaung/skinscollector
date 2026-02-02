@@ -83,8 +83,9 @@
                     <div id="image-preview-container">
                         <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
                         <p class="text-muted mb-0 small">ငွေလွဲ Screenshotပုံ ပို့ပါ(id ပါရမည်)</p>
+                        <p class="text-primary small mb-0 mt-1 d-none" id="compressing-indicator"><i class="fas fa-spinner fa-spin me-1"></i>Compressing...</p>
                     </div>
-                    <input type="file" name="transaction_image" id="transaction_image" class="d-none" accept="image/*" onchange="previewTransactionImage(this)">
+                    <input type="file" name="transaction_image" id="transaction_image" class="d-none" accept="image/*" onchange="handleImageUpload(this)">
                     <img id="transaction-preview" src="#" alt="Preview" class="img-fluid mt-3 d-none" style="max-height: 200px; border-radius: 8px;">
                 </div>
             </div>
@@ -164,25 +165,69 @@
         });
     });
 
-    function previewTransactionImage(input) {
+    function handleImageUpload(input) {
         if (input.files && input.files[0]) {
-            // Check file size (10MB limit)
-            if (input.files[0].size > 10 * 1024 * 1024) {
-                alert('The image file is too large. Please upload an image smaller than 10MB.');
-                input.value = '';
-                return;
-            }
-
-            var reader = new FileReader();
+            const file = input.files[0];
             
+            // Show preview immediately for better UX
+            const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('transaction-preview').src = e.target.result;
                 document.getElementById('transaction-preview').classList.remove('d-none');
                 document.getElementById('image-preview-container').classList.add('d-none');
             }
-            
-            reader.readAsDataURL(input.files[0]);
+            reader.readAsDataURL(file);
+
+            // Compress Image
+            compressImage(file, 1200, 0.7).then(compressedFile => {
+                // Replace the file input with the compressed file
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+                console.log('Image compressed:', (file.size / 1024).toFixed(2) + 'KB -> ' + (compressedFile.size / 1024).toFixed(2) + 'KB');
+            }).catch(error => {
+                console.error('Compression failed:', error);
+            });
         }
+    }
+
+    function compressImage(file, maxWidth, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height = Math.round(height * (maxWidth / width));
+                        width = maxWidth;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(blob => {
+                        if (!blob) {
+                            return reject(new Error('Canvas is empty'));
+                        }
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = error => reject(error);
+            };
+            reader.onerror = error => reject(error);
+        });
     }
 </script>
 
@@ -200,10 +245,29 @@
         text-decoration: none;
     }
     .btn-back:hover {
-        border-color: #0d6efd;
-        color: #0d6efd;
-        background: transparent;
-        transform: translateX(-5px);
+        background: #e9ecef;
+        color: #495057;
+    }
+    .wallet-card {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(78, 115, 223, 0.3);
+    }
+    .wallet-icon-large {
+        font-size: 3.5rem;
+        opacity: 0.2;
+    }
+    .payment-preview-img {
+        max-width: 100%;
+        height: auto;
+        max-height: 300px;
+        object-fit: contain;
+    }
+    @media (max-width: 576px) {
+        .wallet-card-container {
+            padding: 1.5rem !important;
+        }
     }
 </style>
 @endsection

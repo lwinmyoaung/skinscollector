@@ -87,13 +87,15 @@
                                 <div id="transaction-image-preview-container">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
                                     <p class="text-muted mb-0 small">ပုံပို့ရန် ဤနေရာကိုနှိပ်ပါ</p>
+                                    <p class="text-primary small mb-0 mt-1 d-none" id="compressing-indicator"><i class="fas fa-spinner fa-spin me-1"></i>Compressing...</p>
                                 </div>
                                 <input type="file"
                                        name="transaction_image"
                                        id="transaction_image"
                                        class="d-none"
                                        accept="image/*"
-                                       required>
+                                       required
+                                       onchange="handleImageUpload(this)">
                                 <img id="transaction-image-preview"
                                      src="#"
                                      alt="Preview"
@@ -189,61 +191,78 @@
                 }).catch(function() {});
             });
         }
+    });
 
-        if (txInput && txPreview && txContainer) {
-            txInput.addEventListener('change', function() {
-                if (txInput.files && txInput.files[0]) {
-                    // Check file size (10MB limit)
-                    if (txInput.files[0].size > 10 * 1024 * 1024) {
-                        alert('The image file is too large. Please upload an image smaller than 10MB.');
-                        txInput.value = '';
-                        return;
+    function handleImageUpload(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Show preview immediately for better UX
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('transaction-image-preview').src = e.target.result;
+                document.getElementById('transaction-image-preview').classList.remove('d-none');
+                document.getElementById('transaction-image-preview-container').classList.add('d-none');
+            }
+            reader.readAsDataURL(file);
+
+            // Show compressing indicator
+            // document.getElementById('compressing-indicator').classList.remove('d-none');
+
+            // Compress Image
+            compressImage(file, 1200, 0.7).then(compressedFile => {
+                // Replace the file input with the compressed file
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+                console.log('Image compressed:', (file.size / 1024).toFixed(2) + 'KB -> ' + (compressedFile.size / 1024).toFixed(2) + 'KB');
+                
+                // Hide indicator
+                // document.getElementById('compressing-indicator').classList.add('d-none');
+            }).catch(error => {
+                console.error('Compression failed:', error);
+                // document.getElementById('compressing-indicator').classList.add('d-none');
+            });
+        }
+    }
+
+    function compressImage(file, maxWidth, quality) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth) {
+                        height = Math.round(height * (maxWidth / width));
+                        width = maxWidth;
                     }
 
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        txPreview.src = e.target.result;
-                        txPreview.classList.remove('d-none');
-                        txContainer.classList.add('d-none');
-                    };
-                    reader.readAsDataURL(txInput.files[0]);
-                }
-            });
-        }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
 
-        updatePaymentPreview();
-
-        // Handle Form Submission Loading State
-        var paymentForm = document.getElementById('paymentForm');
-        var submitBtn = document.getElementById('paymentSubmitBtn');
-        
-        if (paymentForm && submitBtn) {
-            paymentForm.addEventListener('submit', function(e) {
-                // If form is valid, show loading
-                if (this.checkValidity()) {
-                    var spinner = submitBtn.querySelector('.spinner-border');
-                    var btnText = submitBtn.querySelector('.btn-text');
-                    
-                    if (spinner) spinner.classList.remove('d-none');
-                    if (btnText) btnText.textContent = 'Processing...';
-                    submitBtn.disabled = true;
-                }
-            });
-        }
-
-        // Reset button state if page is loaded from bfcache (back/forward cache)
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted && submitBtn) {
-                var spinner = submitBtn.querySelector('.spinner-border');
-                var btnText = submitBtn.querySelector('.btn-text');
-                
-                if (spinner) spinner.classList.add('d-none');
-                if (btnText) btnText.textContent = '‌ငွေပေးချေခြင်းအတည်ပြုမည်';
-                submitBtn.disabled = false;
-            }
+                    canvas.toBlob(blob => {
+                        if (!blob) {
+                            return reject(new Error('Canvas is empty'));
+                        }
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = error => reject(error);
+            };
+            reader.onerror = error => reject(error);
         });
-    });
+    }
 </script>
-@endsection
-
 @endsection
