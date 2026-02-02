@@ -205,7 +205,7 @@
         const submitBtn = document.getElementById('paymentSubmitBtn');
 
         if (paymentForm && submitBtn) {
-            paymentForm.addEventListener('submit', function(e) {
+            paymentForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
 
                 if (!this.checkValidity()) {
@@ -217,11 +217,26 @@
                 const btnText = submitBtn.querySelector('.btn-text');
                 
                 if (spinner) spinner.classList.remove('d-none');
-                if (btnText) btnText.textContent = 'Processing...';
+                if (btnText) btnText.textContent = 'Compressing...';
                 
                 submitBtn.disabled = true;
 
                 const formData = new FormData(this);
+                const fileInput = document.getElementById('transaction_image');
+
+                // Compress image if present
+                if (fileInput.files.length > 0) {
+                    try {
+                        const compressedBlob = await compressImage(fileInput.files[0]);
+                        formData.set('transaction_image', compressedBlob, 'compressed_image.jpg');
+                        if (btnText) btnText.textContent = 'Uploading...';
+                    } catch (err) {
+                        console.error('Compression failed:', err);
+                        if (btnText) btnText.textContent = 'Uploading (Original)...';
+                    }
+                } else {
+                    if (btnText) btnText.textContent = 'Processing...';
+                }
 
                 fetch(this.action, {
                     method: 'POST',
@@ -265,6 +280,51 @@
             }
         });
     });
+
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const maxWidth = 1280;
+            const maxHeight = 1280;
+            const quality = 0.7;
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = event => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        if (width > height) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        } else {
+                            width = Math.round(width * (maxHeight / height));
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob(blob => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error('Canvas to Blob failed'));
+                        }
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = error => reject(error);
+            };
+            reader.onerror = error => reject(error);
+        });
+    }
 
     function handleImageUpload(input) {
         if (input.files && input.files[0]) {
