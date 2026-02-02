@@ -88,6 +88,7 @@
                                 <div id="transaction-image-preview-container">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
                                     <p class="text-muted mb-0 small">ပုံပို့ရန် ဤနေရာကိုနှိပ်ပါ</p>
+                                    <p class="text-primary small mb-0 mt-1 d-none" id="compressing-indicator"><i class="fas fa-spinner fa-spin me-1"></i>Optimizing...</p>
                                 </div>
                                 <input type="file"
                                        name="transaction_image"
@@ -246,7 +247,84 @@
                 document.getElementById('transaction-image-preview-container').classList.add('d-none');
             }
             reader.readAsDataURL(file);
+
+            // Compress image
+            const indicator = document.getElementById('compressing-indicator');
+            const submitBtn = document.getElementById('paymentSubmitBtn');
+            
+            if (indicator) indicator.classList.remove('d-none');
+            if (submitBtn) submitBtn.disabled = true;
+
+            compressImage(file).then(compressedFile => {
+                // Create a new DataTransfer object to update the input files
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(compressedFile);
+                input.files = dataTransfer.files;
+
+                if (indicator) indicator.classList.add('d-none');
+                if (submitBtn) submitBtn.disabled = false;
+                console.log('Image compressed:', (file.size / 1024 / 1024).toFixed(2) + 'MB -> ' + (compressedFile.size / 1024 / 1024).toFixed(2) + 'MB');
+            }).catch(error => {
+                console.error('Compression failed:', error);
+                if (indicator) indicator.classList.add('d-none');
+                if (submitBtn) submitBtn.disabled = false;
+            });
         }
+    }
+
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const maxWidth = 1920;
+            const maxHeight = 1920;
+            const quality = 0.8;
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round(height * maxWidth / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round(width * maxHeight / height);
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            reject(new Error('Canvas is empty'));
+                            return;
+                        }
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        resolve(compressedFile);
+                    }, 'image/jpeg', quality);
+                };
+                img.onerror = function(error) {
+                    reject(error);
+                };
+            };
+            reader.onerror = function(error) {
+                reject(error);
+            };
+        });
     }
 </script>
 @endsection
