@@ -52,7 +52,7 @@ class LaravelPubgService extends BaseMiniappService
         }
     }
 
-    public function order(string $gameId, string $productId, string $serverId = '1', ?string $cookieString = null): array
+    public function order(string $gameId, string $productId, string $serverId = '1', ?string $cookieString = null, int $count = 1): array
     {
         try {
             $session = $this->createSession($cookieString);
@@ -68,7 +68,7 @@ class LaravelPubgService extends BaseMiniappService
                 'game_id' => $gameId,
                 'server_id' => $serverId,
                 'product_id' => $productId,
-                'count' => '1',
+                'count' => (string) $count,
             ];
 
             $orderUrl = $this->baseUrl.'/order';

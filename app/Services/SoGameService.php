@@ -18,7 +18,7 @@ class SoGameService extends BaseMiniappService
      * @param  string|null  $cookieString  The raw cookie string (optional)
      * @return array Response data
      */
-    public function buyProduct($gameId, $serverId, $productId, $cookieString = null)
+    public function buyProduct($gameId, $serverId, $productId, $cookieString = null, $count = 1)
     {
         // 1. Create Session (Cookies + CSRF)
         $session = $this->createSession($cookieString);
@@ -38,7 +38,7 @@ class SoGameService extends BaseMiniappService
             'game_id' => $gameId,
             'server_id' => $serverId,
             'product_id' => $productId,
-            'count' => '1',
+            'count' => (string) $count,
         ];
 
         // 3. Send Purchase Request
