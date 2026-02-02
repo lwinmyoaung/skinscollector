@@ -23,31 +23,9 @@
     <link rel="pingback" href="{{ url('/xmlrpc.php') }}">
 
     <!-- Favicons -->
-    @php
-        $iconDir = public_path('icon');
-        $exists = function($p) { return file_exists($p); };
-    @endphp
-    @if($exists($iconDir.'/apple-touch-icon.png'))
-        <link rel="apple-touch-icon" sizes="180x180" href="/icon/apple-touch-icon.png">
-    @endif
-    @if($exists($iconDir.'/favicon-32x32.png'))
-        <link rel="icon" type="image/png" sizes="32x32" href="/icon/favicon-32x32.png">
-    @endif
-    @if($exists($iconDir.'/favicon-16x16.png'))
-        <link rel="icon" type="image/png" sizes="16x16" href="/icon/favicon-16x16.png">
-    @endif
-    @if($exists($iconDir.'/favicon.ico'))
-        <link rel="shortcut icon" href="/icon/favicon.ico">
-    @endif
-    @if($exists($iconDir.'/site.webmanifest'))
+    <link rel="shortcut icon" href="/favicon.ico">
+    @if(file_exists(public_path('icon/site.webmanifest')))
         <link rel="manifest" href="/icon/site.webmanifest">
-    @endif
-    @if($exists($iconDir.'/safari-pinned-tab.svg'))
-        <link rel="mask-icon" href="/icon/safari-pinned-tab.svg" color="#f2a800">
-    @endif
-    <meta name="msapplication-TileColor" content="#f2a800">
-    @if($exists($iconDir.'/browserconfig.xml'))
-        <meta name="msapplication-config" content="/icon/browserconfig.xml">
     @endif
     <meta name="theme-color" content="#ffffff">
 
@@ -67,13 +45,7 @@
     <link rel="preload" href="{{ asset('css/custom.css') }}" as="style">
     <link rel="preload" href="{{ asset('css/alert-card.css') }}" as="style">
     <link rel="preload" href="{{ asset('js/custom.js') }}" as="script">
-    @php
-        $bootstrapCssLocal = file_exists(public_path('vendor/bootstrap/css/bootstrap.min.css'));
-        $fontAwesomeCssLocal = file_exists(public_path('vendor/fontawesome/css/all.min.css'));
-    @endphp
-    @if($bootstrapCssLocal)
-        <link rel="preload" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" as="style">
-    @endif
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style">
 
     <!-- SEO Meta Tags -->
     <title>@yield('title', config('app.name', 'Skins Collector').' - Game Top Up & Digital Products')</title>
@@ -87,17 +59,10 @@
     <meta property="article:publisher" content="{{ url('/') }}" />
 
     <!-- Bootstrap CSS -->
-    @if($bootstrapCssLocal)
-        <link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-    @else
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    @endif
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     
     <!-- Font Awesome -->
-    @if($fontAwesomeCssLocal)
-        <link rel="stylesheet" href="{{ asset('vendor/fontawesome/css/all.min.css') }}">
-    @else
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     @endif
     
     <!-- Custom CSS -->

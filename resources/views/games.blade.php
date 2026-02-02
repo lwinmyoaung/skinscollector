@@ -1,14 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-    @php
-        $files = \Illuminate\Support\Facades\Storage::disk('public')->files('ads/slides');
-        $advertiseSlides = array_filter($files, function($file) {
-            return preg_match('/\.(jpg|jpeg|png|webp)$/i', $file);
-        });
-        sort($advertiseSlides);
-    @endphp
-
     @if(count($advertiseSlides) > 0)
         <div id="homeHeroCarousel" class="carousel slide mg-home-carousel" data-bs-ride="carousel" data-bs-interval="3500">
             <div class="carousel-indicators">

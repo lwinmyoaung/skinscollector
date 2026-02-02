@@ -10,11 +10,18 @@ class HomeController extends Controller
 {
     public function index()
     {
-        // View composer already shares gameImages, but the original closure passed it too.
-        // We'll keep passing it to be safe, but ideally we should rely on one mechanism.
-        // For now, let's replicate the closure behavior exactly.
-        $gameImages = GameImage::all()->keyBy('game_code');
-        return view('games', compact('gameImages'));
+        // Cache the directory scanning for slides (1 hour)
+        $advertiseSlides = \Illuminate\Support\Facades\Cache::remember('home.slides', 3600, function () {
+            $files = \Illuminate\Support\Facades\Storage::disk('public')->files('ads/slides');
+            $slides = array_filter($files, function($file) {
+                return preg_match('/\.(jpg|jpeg|png|webp)$/i', $file);
+            });
+            sort($slides);
+            return $slides;
+        });
+
+        // gameImages is provided by View Composer (AppServiceProvider)
+        return view('games', compact('advertiseSlides'));
     }
 
     public function contact()
