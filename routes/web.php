@@ -125,6 +125,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 // User routes
 Route::post('/payment/start', [\App\Http\Controllers\PaymentController::class, 'start'])->name('payment.start');
 Route::post('/payment/submit', [\App\Http\Controllers\PaymentConfirmController::class, 'store'])->name('payment.submit');
+Route::view('/payment-success', 'payment-success')->name('payment.success');
 Route::get('/payment/retry', [\App\Http\Controllers\PaymentController::class, 'retry'])->name('payment.retry');
 
 Route::middleware(['auth'])->group(function () {

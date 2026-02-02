@@ -198,11 +198,11 @@ class PaymentConfirmController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Your '.$methodLabel.' order has been submitted. We will process it shortly.',
-                    'redirect_url' => route('game.category')
+                    'redirect_url' => route('payment.success')
                 ]);
             }
 
-            return redirect()->route('game.category')->with('success', 'Your '.$methodLabel.' order has been submitted. We will process it shortly.');
+            return redirect()->route('payment.success');
 
         } catch (\Exception $e) {
             Log::error('Order submission error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString(), 'input' => $request->except('transaction_image')]);
