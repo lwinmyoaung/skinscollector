@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
 use App\Models\GameImage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,7 +30,10 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrapFive();
 
         View::composer(['games', 'mobilelegend', 'pubg', 'mcgg', 'wwm'], function ($view) {
-            $view->with('gameImages', GameImage::all()->keyBy('game_code'));
+            $gameImages = Cache::remember('global.game_images', 3600, function () {
+                return GameImage::all()->keyBy('game_code');
+            });
+            $view->with('gameImages', $gameImages);
         });
     }
 }

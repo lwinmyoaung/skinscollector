@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminActivityController;
 use App\Http\Controllers\AdminContactController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\McggController;
@@ -16,23 +17,13 @@ use App\Http\Controllers\WwmController;
 use App\Models\GameImage;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    $gameImages = GameImage::all()->keyBy('game_code');
-    return view('games', compact('gameImages'));
-})->name('game.category');
+Route::get('/', [HomeController::class, 'index'])->name('game.category');
 
-Route::get('/contact', function () {
-    return view('contact');
-})->name('contact');
+Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 
-Route::get('/about', function () {
-    return view('about');
-})->name('about');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
 
-Route::get('/payment-methods', function () {
-    $paymentMethods = \App\Models\PaymentMethod::all();
-    return view('payment-methods', compact('paymentMethods'));
-})->name('payment-methods');
+Route::get('/payment-methods', [HomeController::class, 'paymentMethods'])->name('payment-methods');
 
 // Cache Management Routes (Publicly accessible as per user request for curl/cron usage)
 Route::post('/refresh_cache', [AccountController::class, 'refreshCache'])->name('api.refresh_cache');
