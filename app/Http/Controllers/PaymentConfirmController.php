@@ -43,7 +43,7 @@ class PaymentConfirmController extends Controller
                 'payment_method' => 'required|string|max:50',
                 'kpay_phone' => 'required|string',
                 'amount' => 'required|numeric|min:0',
-                'transaction_image' => 'required|image|max:10240',
+                'transaction_image' => 'required|image|max:51200',
                 'quantity' => 'nullable|integer|min:1',
             ]);
 

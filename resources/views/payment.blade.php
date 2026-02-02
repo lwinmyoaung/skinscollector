@@ -88,7 +88,6 @@
                                 <div id="transaction-image-preview-container">
                                     <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
                                     <p class="text-muted mb-0 small">ပုံပို့ရန် ဤနေရာကိုနှိပ်ပါ</p>
-                                    <p class="text-primary small mb-0 mt-1 d-none" id="compressing-indicator"><i class="fas fa-spinner fa-spin me-1"></i>Compressing...</p>
                                 </div>
                                 <input type="file"
                                        name="transaction_image"
