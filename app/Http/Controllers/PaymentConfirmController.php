@@ -25,12 +25,9 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use App\Traits\ImageUploadTrait;
 
 class PaymentConfirmController extends Controller
 {
-    use ImageUploadTrait;
-
     public function store(Request $request)
     {
         try {
@@ -63,7 +60,12 @@ class PaymentConfirmController extends Controller
                 $file = $request->file('transaction_image');
                 $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
                 
-                $this->optimizeAndStoreImage($file, 'topups', $filename);
+                // Direct upload to adminimages/topups folder
+                $destinationPath = public_path('adminimages/topups');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0777, true);
+                }
+                $file->move($destinationPath, $filename);
                 
                 $data['transaction_image'] = $filename;
             }
