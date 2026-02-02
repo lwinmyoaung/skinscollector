@@ -17,7 +17,7 @@ trait ImageUploadTrait
      * @param int $maxWidth
      * @return void
      */
-    public function optimizeAndStoreImage($file, $path, $filename, $maxWidth = 1000)
+    public function optimizeAndStoreImage($file, $path, $filename, $maxWidth = 5000)
     {
         if (! extension_loaded('gd')) {
             $file->storeAs($path, $filename, 'public');
@@ -29,62 +29,67 @@ trait ImageUploadTrait
             $extension = strtolower($file->getClientOriginalExtension());
             list($width, $height) = getimagesize($sourcePath);
 
+            // Only resize if the image is HUGE (larger than 5000px)
+            // Otherwise, keep original size as requested
             if ($width > $maxWidth) {
                 $newWidth = $maxWidth;
                 $newHeight = (int) ($height * ($newWidth / $width));
-                
-                $image_p = imagecreatetruecolor($newWidth, $newHeight);
-                $image = null;
+            } else {
+                $newWidth = $width;
+                $newHeight = $height;
+            }
 
+            $image_p = imagecreatetruecolor($newWidth, $newHeight);
+            $image = null;
+
+            switch ($extension) {
+                case 'jpg':
+                case 'jpeg':
+                    $image = imagecreatefromjpeg($sourcePath);
+                    break;
+                case 'png':
+                    $image = imagecreatefrompng($sourcePath);
+                    imagealphablending($image_p, false);
+                    imagesavealpha($image_p, true);
+                    break;
+                case 'gif':
+                    $image = imagecreatefromgif($sourcePath);
+                    break;
+                case 'webp':
+                    if (function_exists('imagecreatefromwebp')) {
+                        $image = imagecreatefromwebp($sourcePath);
+                    }
+                    break;
+            }
+
+            if ($image) {
+                imagecopyresampled($image_p, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                
+                $tempPath = tempnam(sys_get_temp_dir(), 'img_');
+                
                 switch ($extension) {
                     case 'jpg':
                     case 'jpeg':
-                        $image = imagecreatefromjpeg($sourcePath);
+                        imageinterlace($image_p, true); // Enable Progressive JPEG
+                        imagejpeg($image_p, $tempPath, 90); // Quality 90 (High Quality)
                         break;
                     case 'png':
-                        $image = imagecreatefrompng($sourcePath);
-                        imagealphablending($image_p, false);
-                        imagesavealpha($image_p, true);
+                        imagepng($image_p, $tempPath, 4); // Low compression (faster save)
                         break;
                     case 'gif':
-                        $image = imagecreatefromgif($sourcePath);
+                        imagegif($image_p, $tempPath);
                         break;
                     case 'webp':
-                        if (function_exists('imagecreatefromwebp')) {
-                            $image = imagecreatefromwebp($sourcePath);
-                        }
+                        imagewebp($image_p, $tempPath, 90); // Quality 90
                         break;
                 }
 
-                if ($image) {
-                    imagecopyresampled($image_p, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                    
-                    $tempPath = tempnam(sys_get_temp_dir(), 'img_');
-                    
-                    switch ($extension) {
-                    case 'jpg':
-                    case 'jpeg':
-                        imageinterlace($image_p, true); // Enable Progressive JPEG
-                        imagejpeg($image_p, $tempPath, 80); // Reduced quality slightly for speed
-                        break;
-                    case 'png':
-                        imagepng($image_p, $tempPath, 6); // Compression level 6 (faster than 8)
-                        break;
-                        case 'gif':
-                            imagegif($image_p, $tempPath);
-                            break;
-                        case 'webp':
-                            imagewebp($image_p, $tempPath, 85);
-                            break;
-                    }
-
-                    Storage::disk('public')->putFileAs($path, new File($tempPath), $filename);
-                    
-                    imagedestroy($image_p);
-                    imagedestroy($image);
-                    @unlink($tempPath);
-                    return;
-                }
+                Storage::disk('public')->putFileAs($path, new File($tempPath), $filename);
+                
+                imagedestroy($image_p);
+                imagedestroy($image);
+                @unlink($tempPath);
+                return;
             }
         } catch (\Exception $e) {
             Log::warning('Image optimization failed, falling back to original: ' . $e->getMessage());
