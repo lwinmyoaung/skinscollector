@@ -145,6 +145,8 @@ class AccountController extends Controller
             $this->optimizeAndStoreImage($image, 'ads/slides', $filename);
         }
 
+        Cache::forget('home.slides');
+
         return redirect()->route('admin.ads')->with('success', 'Slides uploaded successfully.');
     }
 
@@ -158,6 +160,7 @@ class AccountController extends Controller
 
         if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+            Cache::forget('home.slides');
         }
 
         return redirect()->route('admin.ads')->with('success', 'Slide deleted successfully.');
@@ -183,6 +186,8 @@ class AccountController extends Controller
         $filename = Str::random(40) . '.' . $validated['entry_image']->getClientOriginalExtension();
         $this->optimizeAndStoreImage($validated['entry_image'], $directory, $filename);
 
+        Cache::forget('layout.entry_ad');
+
         return redirect()->route('admin.ads')->with('success', 'Entry ad image updated successfully.');
     }
 
@@ -195,6 +200,7 @@ class AccountController extends Controller
             foreach ($files as $file) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
             }
+            Cache::forget('layout.entry_ad');
         }
 
         return redirect()->route('admin.ads')->with('success', 'Entry ad image removed successfully.');

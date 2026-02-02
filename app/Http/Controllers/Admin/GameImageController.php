@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Traits\ImageUploadTrait;
+use Illuminate\Support\Facades\Cache;
 
 class GameImageController extends Controller
 {
@@ -54,6 +55,9 @@ class GameImageController extends Controller
             
             $game->image_path = $path;
             $game->save();
+            
+            // Clear cache to reflect changes immediately
+            Cache::forget('global.game_images');
         }
 
         return redirect()->route('admin.game-images.index')->with('success', 'Game image updated successfully.');
