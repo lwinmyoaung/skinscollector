@@ -11,7 +11,7 @@
             <div class="carousel-inner">
                 @foreach($advertiseSlides as $i => $slidePath)
                     <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
-                        <img src="{{ asset('adminimages/'.$slidePath) }}" class="d-block w-100" alt="Promotion banner {{ $i + 1 }}" @if($i === 0) fetchpriority="high" @else loading="lazy" @endif>
+                        <img src="{{ asset('adminimages/'.$slidePath) }}" class="d-block w-100" alt="Promotion banner {{ $i + 1 }}" @if($i === 0) fetchpriority="high" decoding="async" @else loading="lazy" decoding="async" @endif>
                     </div>
                 @endforeach
             </div>

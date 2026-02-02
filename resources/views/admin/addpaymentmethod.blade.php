@@ -61,7 +61,7 @@
                                             <p class="text-muted mb-0 small">Click to upload image</p>
                                         </div>
                                         <input type="file" name="image" id="image" class="d-none" accept="image/*" onchange="previewImage(this)">
-                                        <img id="image-preview" src="#" alt="Preview" class="img-fluid mt-3 d-none" style="max-height: 200px; border-radius: 8px;">
+                                        <img id="image-preview" src="#" alt="Preview" loading="lazy" decoding="async" class="img-fluid mt-3 d-none" style="max-height: 200px; border-radius: 8px;">
                                     </div>
                                 </div>
 

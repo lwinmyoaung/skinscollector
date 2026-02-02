@@ -21,6 +21,7 @@
                         alt="KPay Screenshot"
                         class="rounded border flex-shrink-0"
                         loading="lazy"
+                        decoding="async"
                         style="height: 40px; width: auto; max-width: 60px; object-fit: cover; cursor: pointer;"
                         onclick="window.open('{{ asset('adminimages/topups/' . $order->transaction_image) }}', '_blank')">
                 <a href="{{ asset('adminimages/topups/' . $order->transaction_image) }}"

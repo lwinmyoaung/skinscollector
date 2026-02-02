@@ -46,7 +46,7 @@
             @if($appIcon ?? false)
                 <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
                     <div class="border rounded bg-light p-2">
-                        <img src="{{ $appIcon['url'] }}" alt="{{ $appIcon['name'] }}" style="width: 100px; height: 100px; object-fit: contain;">
+                        <img src="{{ $appIcon['url'] }}" alt="{{ $appIcon['name'] }}" loading="lazy" decoding="async" style="width: 100px; height: 100px; object-fit: contain;">
                     </div>
                     <div class="d-flex flex-column flex-md-row gap-2">
                         <div class="text-muted small">
@@ -84,7 +84,7 @@
             @if($entryAd ?? false)
                 <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
                     <div class="border rounded bg-light p-2">
-                        <img src="{{ $entryAd['url'] }}" alt="{{ $entryAd['name'] }}" style="height: 120px; width: 214px; object-fit: cover;">
+                        <img src="{{ $entryAd['url'] }}" alt="{{ $entryAd['name'] }}" loading="lazy" decoding="async" style="height: 120px; width: 214px; object-fit: cover;">
                     </div>
                     <div class="d-flex flex-column flex-md-row gap-2">
                         <div class="text-muted small">
@@ -144,7 +144,7 @@
                             <tr>
                                 <td class="ps-4">
                                     <div class="p-1 border rounded bg-light d-inline-block">
-                                        <img src="{{ $slide['url'] }}" alt="{{ $slide['name'] }}" class="d-block" style="height: 54px; width: 92px; object-fit: cover;">
+                                        <img src="{{ $slide['url'] }}" alt="{{ $slide['name'] }}" loading="lazy" class="d-block" style="height: 54px; width: 92px; object-fit: cover;">
                                     </div>
                                 </td>
                                 <td>

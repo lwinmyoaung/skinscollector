@@ -11,7 +11,6 @@ use App\Http\Controllers\MLproductsController;
 use App\Http\Controllers\PaymentConfirmController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PubgController;
-use App\Http\Controllers\TopupController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WwmController;
 use App\Models\GameImage;
@@ -124,9 +123,6 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
 });
 
 // User routes
-// Route::get('/topup', [TopupController::class, 'index'])->name('topup');
-// Route::post('/topup', [TopupController::class, 'store'])->name('topup.store');
-
 Route::post('/payment/start', [\App\Http\Controllers\PaymentController::class, 'start'])->name('payment.start');
 Route::post('/payment/submit', [\App\Http\Controllers\PaymentConfirmController::class, 'store'])->name('payment.submit');
 Route::get('/payment/retry', [\App\Http\Controllers\PaymentController::class, 'retry'])->name('payment.retry');

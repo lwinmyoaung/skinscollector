@@ -35,7 +35,7 @@
                 <!-- Logo -->
                 <div class="mg-logo-container">
                     <a href="{{ url('/') }}" class="mg-logo">
-                        <img src="{{ asset('adminimages/logo/skincollector.jpg') }}" alt="{{ config('app.name', 'Skins Collector') }}">
+                        <img src="{{ asset('adminimages/logo/skincollector.jpg') }}" alt="{{ config('app.name', 'Skins Collector') }}" decoding="async" fetchpriority="high">
                         <span class="mg-logo-text d-none d-lg-block">{{ config('app.name', 'Skins Collector') }}</span>
                         <!-- Mobile Stacked Text -->
                         <div class="mg-mobile-brand d-lg-none">

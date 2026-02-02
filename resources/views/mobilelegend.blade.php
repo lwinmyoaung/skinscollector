@@ -36,7 +36,7 @@
                                     <input type="radio" name="region" class="ml-region-input" value="myanmar" {{ $region === 'myanmar' ? 'checked' : '' }}>
                                     <div class="ml-region-card">
                                         <i class="fas fa-check-circle ml-check-icon"></i>
-                                        <img src="https://flagcdn.com/w40/mm.png" alt="Myanmar" class="ml-region-flag-img" loading="lazy">
+                                        <img src="https://flagcdn.com/w40/mm.png" alt="Myanmar" class="ml-region-flag-img" loading="lazy" decoding="async">
                                         <span class="ml-region-name">Myanmar</span>
                                     </div>
                                 </label>
@@ -44,7 +44,7 @@
                                     <input type="radio" name="region" class="ml-region-input" value="malaysia" {{ $region === 'malaysia' ? 'checked' : '' }}>
                                     <div class="ml-region-card">
                                         <i class="fas fa-check-circle ml-check-icon"></i>
-                                        <img src="https://flagcdn.com/w40/my.png" alt="Malaysia" class="ml-region-flag-img" loading="lazy">
+                                        <img src="https://flagcdn.com/w40/my.png" alt="Malaysia" class="ml-region-flag-img" loading="lazy" decoding="async">
                                         <span class="ml-region-name">Malaysia</span>
                                     </div>
                                 </label>
@@ -52,7 +52,7 @@
                                     <input type="radio" name="region" class="ml-region-input" value="philippines" {{ $region === 'philippines' ? 'checked' : '' }}>
                                     <div class="ml-region-card">
                                         <i class="fas fa-check-circle ml-check-icon"></i>
-                                        <img src="https://flagcdn.com/w40/ph.png" alt="Philippines" class="ml-region-flag-img" loading="lazy">
+                                        <img src="https://flagcdn.com/w40/ph.png" alt="Philippines" class="ml-region-flag-img" loading="lazy" decoding="async">
                                         <span class="ml-region-name">Philippines</span>
                                     </div>
                                 </label>
@@ -60,7 +60,7 @@
                                     <input type="radio" name="region" class="ml-region-input" value="singapore" {{ $region === 'singapore' ? 'checked' : '' }}>
                                     <div class="ml-region-card">
                                         <i class="fas fa-check-circle ml-check-icon"></i>
-                                        <img src="https://flagcdn.com/w40/sg.png" alt="Singapore" class="ml-region-flag-img" loading="lazy">
+                                        <img src="https://flagcdn.com/w40/sg.png" alt="Singapore" class="ml-region-flag-img" loading="lazy" decoding="async">
                                         <span class="ml-region-name">Singapore</span>
                                     </div>
                                 </label>
@@ -68,7 +68,7 @@
                                     <input type="radio" name="region" class="ml-region-input" value="indonesia" {{ $region === 'indonesia' ? 'checked' : '' }}>
                                     <div class="ml-region-card">
                                         <i class="fas fa-check-circle ml-check-icon"></i>
-                                        <img src="https://flagcdn.com/w40/id.png" alt="Indonesia" class="ml-region-flag-img" loading="lazy">
+                                        <img src="https://flagcdn.com/w40/id.png" alt="Indonesia" class="ml-region-flag-img" loading="lazy" decoding="async">
                                         <span class="ml-region-name">Indonesia</span>
                                     </div>
                                 </label>
@@ -76,7 +76,7 @@
                                     <input type="radio" name="region" class="ml-region-input" value="russia" {{ $region === 'russia' ? 'checked' : '' }}>
                                     <div class="ml-region-card">
                                         <i class="fas fa-check-circle ml-check-icon"></i>
-                                        <img src="https://flagcdn.com/w40/ru.png" alt="Russia" class="ml-region-flag-img" loading="lazy">
+                                        <img src="https://flagcdn.com/w40/ru.png" alt="Russia" class="ml-region-flag-img" loading="lazy" decoding="async">
                                         <span class="ml-region-name">Russia</span>
                                     </div>
                                 </label>

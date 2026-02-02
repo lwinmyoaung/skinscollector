@@ -58,6 +58,8 @@
                                     <img id="payment_image_preview"
                                          src=""
                                          alt="Payment Method"
+                                         loading="lazy"
+                                         decoding="async"
                                          class="rounded border img-fluid"
                                          style="max-width: 300px; height:auto; object-fit:contain;"
                                          onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
@@ -191,6 +193,39 @@
                 }).catch(function() {});
             });
         }
+
+        // Form Submission Handling
+        const paymentForm = document.getElementById('paymentForm');
+        const submitBtn = document.getElementById('paymentSubmitBtn');
+
+        if (paymentForm && submitBtn) {
+            paymentForm.addEventListener('submit', function(e) {
+                // If form is valid, show loading state
+                // HTML5 validation will prevent submission if invalid
+                if (this.checkValidity()) {
+                    const spinner = submitBtn.querySelector('.spinner-border');
+                    const btnText = submitBtn.querySelector('.btn-text');
+                    
+                    if (spinner) spinner.classList.remove('d-none');
+                    if (btnText) btnText.textContent = 'Processing...';
+                    
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+
+        // Restore button state on page show (bfcache)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted && submitBtn) {
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const btnText = submitBtn.querySelector('.btn-text');
+                
+                if (spinner) spinner.classList.add('d-none');
+                if (btnText) btnText.textContent = '‌ငွေပေးချေခြင်းအတည်ပြုမည်';
+                
+                submitBtn.disabled = false;
+            }
+        });
     });
 
     function handleImageUpload(input) {
@@ -207,7 +242,8 @@
             reader.readAsDataURL(file);
 
             // Show compressing indicator
-            // document.getElementById('compressing-indicator').classList.remove('d-none');
+            const indicator = document.getElementById('compressing-indicator');
+            if (indicator) indicator.classList.remove('d-none');
 
             // Compress Image
             compressImage(file, 1200, 0.7).then(compressedFile => {
@@ -218,10 +254,11 @@
                 console.log('Image compressed:', (file.size / 1024).toFixed(2) + 'KB -> ' + (compressedFile.size / 1024).toFixed(2) + 'KB');
                 
                 // Hide indicator
-                // document.getElementById('compressing-indicator').classList.add('d-none');
+                if (indicator) indicator.classList.add('d-none');
             }).catch(error => {
                 console.error('Compression failed:', error);
-                // document.getElementById('compressing-indicator').classList.add('d-none');
+                // Hide indicator on error too
+                if (indicator) indicator.classList.add('d-none');
             });
         }
     }

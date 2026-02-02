@@ -63,7 +63,7 @@
                                                 <div class="card-body text-center d-flex align-items-center justify-content-center">
                                                     <div>
                                                         <p class="small text-muted mb-2">Current Image</p>
-                                                        <img src="{{ asset('adminimages/images/paymentmethodphoto/'.$paymentmethod->image) }}" alt="Current" class="img-fluid rounded shadow-sm" style="max-height: 150px;" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                                                        <img src="{{ asset('adminimages/images/paymentmethodphoto/'.$paymentmethod->image) }}" alt="Current" class="img-fluid rounded shadow-sm" style="max-height: 150px;" loading="lazy" decoding="async" onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
                                                     </div>
                                                 </div>
                                             </div>
@@ -75,7 +75,7 @@
                                                     <p class="text-muted mb-0 small">Click to replace image</p>
                                                 </div>
                                                 <input type="file" name="image" id="image" class="d-none" accept="image/*" onchange="previewImage(this)">
-                                                <img id="image-preview" src="#" alt="Preview" class="img-fluid mt-3 d-none" style="max-height: 150px; border-radius: 8px;">
+                                                <img id="image-preview" src="#" alt="Preview" loading="lazy" decoding="async" class="img-fluid mt-3 d-none" style="max-height: 150px; border-radius: 8px;">
                                             </div>
                                         </div>
                                     </div>

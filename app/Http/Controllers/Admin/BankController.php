@@ -25,7 +25,7 @@ class BankController extends Controller
             $query->whereDate('created_at', $date);
         }
 
-        $orders = $query->latest()->get();
+        $orders = $query->with('user')->latest()->get();
 
         $totalSales = $orders->sum('selling_price');
         $totalCost = $orders->sum('cost_price');

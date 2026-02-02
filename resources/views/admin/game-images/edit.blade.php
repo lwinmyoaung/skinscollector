@@ -27,7 +27,7 @@
                         <div class="mb-4">
                             <label class="form-label text-white-50">Current Image</label>
                             <div class="d-block mb-2">
-                                <img src="{{ asset('adminimages/' . $game->image_path) }}" alt="Current Image" class="img-thumbnail" style="max-height: 200px;">
+                                <img src="{{ asset('adminimages/' . $game->image_path) }}" alt="Current Image" loading="lazy" decoding="async" class="img-thumbnail" style="max-height: 200px;">
                             </div>
                             <small class="text-white-50">This is the current image displayed on the website.</small>
                         </div>
