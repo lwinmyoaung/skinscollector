@@ -22,6 +22,7 @@
     @endif
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     @yield('styles')
 </head>
 <body class="admin-body">
@@ -43,11 +44,11 @@
         </div>
 
         <nav class="admin-nav">
-            <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.confirm.orders') }}" class="admin-nav-link {{ request()->routeIs('admin.confirm.orders') ? 'active' : '' }}">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Orders</span>
             </a>
-            <a href="{{ route('admin.ads') }}" class="admin-nav-link {{ request()->routeIs('admin.ads') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-images"></i>
                 <span>Ads Manager</span>
             </a>
@@ -185,15 +186,7 @@
 @else
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 @endif
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        sidebar.classList.toggle('show');
-        overlay.classList.toggle('show');
-    }
-</script>
-
+    <script defer src="{{ asset('js/admin.js') }}"></script>
 @yield('scripts')
 
 </body>

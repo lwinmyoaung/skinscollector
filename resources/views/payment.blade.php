@@ -61,8 +61,7 @@
                                          loading="lazy"
                                          decoding="async"
                                          class="rounded border img-fluid"
-                                         style="max-width: 300px; height:auto; object-fit:contain;"
-                                         onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
+                                     onerror="this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E'">
                                     <div class="w-100">
                                         <div class="fw-semibold" id="payment_method_name"></div>
                                         <div class="small text-muted d-flex flex-wrap align-items-center gap-2 mt-2">
@@ -150,33 +149,41 @@
             var imageUrl = selected.getAttribute('data-image') || '';
             var phone = selected.getAttribute('data-phone') || '';
 
-            if (!imageUrl && !phone) {
-                box.classList.add('d-none');
-                image.src = '';
-                nameEl.textContent = '';
-                phoneText.textContent = '';
-                copyBtn.disabled = true;
-                return;
-            }
-
+            // Show box if a payment method is selected, regardless of image/phone
+            // This ensures the user sees the selection even if details are missing
+            box.classList.remove('d-none');
+            
             if (imageUrl) {
                 image.src = imageUrl;
+                image.classList.remove('d-none');
+            } else {
+                // Use placeholder if no image
+                image.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22400%22%20height%3D%22300%22%20viewBox%3D%220%200%20400%20300%22%3E%3Crect%20width%3D%22400%22%20height%3D%22300%22%20fill%3D%22%23e9ecef%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20font-family%3D%22sans-serif%22%20font-size%3D%2220%22%20fill%3D%22%236c757d%22%3ENo%20Image%3C%2Ftext%3E%3C%2Fsvg%3E';
+                // Optional: image.classList.add('d-none'); if we want to hide it completely
+                image.classList.remove('d-none'); 
             }
 
             nameEl.textContent = selected.textContent.trim();
 
             if (phone && phone.trim() !== '') {
                 phoneText.textContent = phone;
+                phoneText.parentElement.classList.remove('d-none'); // Ensure parent span is visible
                 copyBtn.disabled = false;
+                copyBtn.classList.remove('d-none');
             } else {
                 phoneText.textContent = '';
+                phoneText.parentElement.classList.add('d-none'); // Hide parent span if no phone
                 copyBtn.disabled = true;
+                copyBtn.classList.add('d-none');
             }
-
-            box.classList.remove('d-none');
         }
 
         paymentSelect.addEventListener('change', updatePaymentPreview);
+        
+        // Initialize preview on page load if a method is already selected
+        if (paymentSelect.value) {
+            updatePaymentPreview();
+        }
 
         if (copyBtn) {
             copyBtn.addEventListener('click', function() {
@@ -232,7 +239,7 @@
         if (input.files && input.files[0]) {
             const file = input.files[0];
             
-            // Show preview immediately for better UX
+            // Show preview immediately
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('transaction-image-preview').src = e.target.result;
@@ -240,66 +247,7 @@
                 document.getElementById('transaction-image-preview-container').classList.add('d-none');
             }
             reader.readAsDataURL(file);
-
-            // Show compressing indicator
-            const indicator = document.getElementById('compressing-indicator');
-            if (indicator) indicator.classList.remove('d-none');
-
-            // Compress Image
-            compressImage(file, 1200, 0.7).then(compressedFile => {
-                // Replace the file input with the compressed file
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(compressedFile);
-                input.files = dataTransfer.files;
-                console.log('Image compressed:', (file.size / 1024).toFixed(2) + 'KB -> ' + (compressedFile.size / 1024).toFixed(2) + 'KB');
-                
-                // Hide indicator
-                if (indicator) indicator.classList.add('d-none');
-            }).catch(error => {
-                console.error('Compression failed:', error);
-                // Hide indicator on error too
-                if (indicator) indicator.classList.add('d-none');
-            });
         }
-    }
-
-    function compressImage(file, maxWidth, quality) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = event => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > maxWidth) {
-                        height = Math.round(height * (maxWidth / width));
-                        width = maxWidth;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    canvas.toBlob(blob => {
-                        if (!blob) {
-                            return reject(new Error('Canvas is empty'));
-                        }
-                        const compressedFile = new File([blob], file.name, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        });
-                        resolve(compressedFile);
-                    }, 'image/jpeg', quality);
-                };
-                img.onerror = error => reject(error);
-            };
-            reader.onerror = error => reject(error);
-        });
     }
 </script>
 @endsection
