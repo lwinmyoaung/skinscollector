@@ -87,13 +87,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             @php
                 $layoutEntryAdPath = null;
                 if (request()->routeIs('game.category')) {
-                    $entryFiles = \Illuminate\Support\Facades\Storage::disk('public')->files('ads/entry');
-                    foreach ($entryFiles as $file) {
-                        if (preg_match('/\.(jpg|jpeg|png|webp)$/i', $file)) {
-                            $layoutEntryAdPath = $file;
-                            break;
+                    $layoutEntryAdPath = \Illuminate\Support\Facades\Cache::remember('layout.entry_ad', 3600, function () {
+                        $entryFiles = \Illuminate\Support\Facades\Storage::disk('public')->files('ads/entry');
+                        foreach ($entryFiles as $file) {
+                            if (preg_match('/\.(jpg|jpeg|png|webp)$/i', $file)) {
+                                return $file;
+                            }
                         }
-                    }
+                        return null;
+                    });
                 }
             @endphp
             @if($layoutEntryAdPath)

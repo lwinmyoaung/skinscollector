@@ -62,13 +62,14 @@ trait ImageUploadTrait
                     $tempPath = tempnam(sys_get_temp_dir(), 'img_');
                     
                     switch ($extension) {
-                        case 'jpg':
-                        case 'jpeg':
-                            imagejpeg($image_p, $tempPath, 85);
-                            break;
-                        case 'png':
-                            imagepng($image_p, $tempPath, 8);
-                            break;
+                    case 'jpg':
+                    case 'jpeg':
+                        imageinterlace($image_p, true); // Enable Progressive JPEG
+                        imagejpeg($image_p, $tempPath, 80); // Reduced quality slightly for speed
+                        break;
+                    case 'png':
+                        imagepng($image_p, $tempPath, 6); // Compression level 6 (faster than 8)
+                        break;
                         case 'gif':
                             imagegif($image_p, $tempPath);
                             break;
