@@ -17,10 +17,10 @@ trait ImageUploadTrait
      * @param int $maxWidth
      * @return void
      */
-    public function optimizeAndStoreImage($file, $path, $filename, $maxWidth = 1920)
+    public function optimizeAndStoreImage($file, $path, $filename, $maxWidth = 1000)
     {
-        // Standard Web Limit: 1920px (Full HD)
-        // If user provided a larger limit, we respect it, but default to 1920 for "Standard Fasting"
+        // Standard Web Limit: 1000px (Optimized for speed)
+        // If user provided a larger limit, we respect it, but default to 1000 for "Standard Fasting"
         
         if (! extension_loaded('gd')) {
             $file->storeAs($path, $filename, 'public');

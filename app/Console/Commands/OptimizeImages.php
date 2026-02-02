@@ -113,7 +113,7 @@ class OptimizeImages extends Command
         $height = $imageInfo[1];
 
         // Max width standard
-        $maxWidth = 1920;
+        $maxWidth = 1000;
 
         // Create resource based on REAL mime type
         $image = null;
