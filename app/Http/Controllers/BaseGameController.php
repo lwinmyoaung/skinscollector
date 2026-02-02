@@ -14,7 +14,7 @@ abstract class BaseGameController extends Controller
 
     public function index(Request $request)
     {
-        $products = Cache::remember($this->cacheKey . '.products', 30, function () {
+        $products = Cache::remember($this->cacheKey . '.products', 3600, function () {
             return $this->modelClass::query()
                 ->where('status', 1)
                 ->orderBy('price')

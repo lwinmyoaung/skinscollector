@@ -23,9 +23,14 @@ class NotificationController extends Controller
 
     public function getUnread()
     {
-        $notifications = Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
-            ->orderBy('created_at', 'desc')
+        // Optimized: Only count total, but fetch limited notifications
+        $query = Notification::where('user_id', Auth::id())
+            ->where('is_read', false);
+            
+        $count = $query->count();
+        
+        $notifications = $query->orderBy('created_at', 'desc')
+            ->limit(10) // Limit to latest 10
             ->get()
             ->map(function ($notification) {
                 return [
@@ -39,7 +44,7 @@ class NotificationController extends Controller
             });
 
         return response()->json([
-            'count' => $notifications->count(),
+            'count' => $count,
             'notifications' => $notifications
         ]);
     }

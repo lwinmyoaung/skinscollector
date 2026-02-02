@@ -378,9 +378,9 @@
                 .catch(error => console.error('Error checking notifications:', error));
         }
 
-        // Check immediately and then every 10 seconds
+        // Check immediately and then every 60 seconds (optimized for performance)
         checkUnreadNotifications();
-        setInterval(checkUnreadNotifications, 10000);
+        setInterval(checkUnreadNotifications, 60000);
         @endauth
     </script>
     <style>

@@ -63,6 +63,18 @@
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
 
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="{{ asset('css/custom.css') }}" as="style">
+    <link rel="preload" href="{{ asset('css/alert-card.css') }}" as="style">
+    <link rel="preload" href="{{ asset('js/custom.js') }}" as="script">
+    @php
+        $bootstrapCssLocal = file_exists(public_path('vendor/bootstrap/css/bootstrap.min.css'));
+        $fontAwesomeCssLocal = file_exists(public_path('vendor/fontawesome/css/all.min.css'));
+    @endphp
+    @if($bootstrapCssLocal)
+        <link rel="preload" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" as="style">
+    @endif
+
     <!-- SEO Meta Tags -->
     <title>@yield('title', config('app.name', 'Skins Collector').' - Game Top Up & Digital Products')</title>
     <meta name="description" content="@yield('description', 'Game top ups and digital products with instant delivery')">
@@ -75,10 +87,6 @@
     <meta property="article:publisher" content="{{ url('/') }}" />
 
     <!-- Bootstrap CSS -->
-    @php
-        $bootstrapCssLocal = file_exists(public_path('vendor/bootstrap/css/bootstrap.min.css'));
-        $fontAwesomeCssLocal = file_exists(public_path('vendor/fontawesome/css/all.min.css'));
-    @endphp
     @if($bootstrapCssLocal)
         <link href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     @else

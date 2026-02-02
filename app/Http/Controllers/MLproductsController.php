@@ -111,7 +111,7 @@ class MLproductsController extends Controller
     {
         $region = $request->get('region', 'myanmar');
         $cacheKey = 'mlbb.products.'.$region;
-        $mlproducts = Cache::remember($cacheKey, 30, function () use ($region) {
+        $mlproducts = Cache::remember($cacheKey, 3600, function () use ($region) {
             $items = UserMlProduct::query()
                 ->where('region', $region)
                 ->where('status', 1)
