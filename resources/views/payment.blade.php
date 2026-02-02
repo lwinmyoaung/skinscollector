@@ -206,17 +206,49 @@
 
         if (paymentForm && submitBtn) {
             paymentForm.addEventListener('submit', function(e) {
-                // If form is valid, show loading state
-                // HTML5 validation will prevent submission if invalid
-                if (this.checkValidity()) {
-                    const spinner = submitBtn.querySelector('.spinner-border');
-                    const btnText = submitBtn.querySelector('.btn-text');
-                    
-                    if (spinner) spinner.classList.remove('d-none');
-                    if (btnText) btnText.textContent = 'Processing...';
-                    
-                    submitBtn.disabled = true;
+                e.preventDefault();
+
+                if (!this.checkValidity()) {
+                    this.reportValidity();
+                    return;
                 }
+
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const btnText = submitBtn.querySelector('.btn-text');
+                
+                if (spinner) spinner.classList.remove('d-none');
+                if (btnText) btnText.textContent = 'Processing...';
+                
+                submitBtn.disabled = true;
+
+                const formData = new FormData(this);
+
+                fetch(this.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (btnText) btnText.textContent = 'Success!';
+                        // Optional: Show a success message or toast here
+                        window.location.href = data.redirect_url;
+                    } else {
+                        throw new Error(data.message || 'Submission failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'An error occurred. Please try again.');
+                    
+                    if (spinner) spinner.classList.add('d-none');
+                    if (btnText) btnText.textContent = '‌ငွေပေးချေခြင်းအတည်ပြုမည်';
+                    submitBtn.disabled = false;
+                });
             });
         }
 

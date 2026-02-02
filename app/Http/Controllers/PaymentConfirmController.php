@@ -190,10 +190,26 @@ class PaymentConfirmController extends Controller
                 ]);
             }
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Your '.$methodLabel.' order has been submitted. We will process it shortly.',
+                    'redirect_url' => route('game.category')
+                ]);
+            }
+
             return redirect()->route('game.category')->with('success', 'Your '.$methodLabel.' order has been submitted. We will process it shortly.');
 
         } catch (\Exception $e) {
             Log::error('Order submission error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString(), 'input' => $request->except('transaction_image')]);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'An error occurred while processing your request. Please try again.'
+                ], 500);
+            }
+
             return redirect()->route('payment.retry')
                 ->with('error', 'An error occurred while processing your request. Please try again.')
                 ->withInput();
