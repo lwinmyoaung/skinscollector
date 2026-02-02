@@ -34,6 +34,9 @@ class PaymentConfirmController extends Controller
     public function store(Request $request)
     {
         try {
+            Log::info('Payment submission started', ['phone' => $request->input('kpay_phone') ?? 'N/A']);
+            $startTime = microtime(true);
+
             $validator = Validator::make($request->all(), [
                 'game_type' => 'required|string|in:mlbb,pubg,mcgg,wwm',
                 'product_id' => 'required|string',
@@ -139,19 +142,14 @@ class PaymentConfirmController extends Controller
 
             // Guest checkout logic: Find or create user by phone, then auto-login
             if ($normalizedPhone) {
-                // If user is already logged in (e.g. admin or regular user), use their ID
-                // But if it's admin, we might want to attach it to a user account instead?
-                // For now, let's keep it simple: if logged in as user, use Auth::id().
-                // If not logged in, find/create by phone.
-                
+                Log::info('Processing guest checkout user logic');
                 if (Auth::check() && Auth::user()->role !== 'admin') {
                     $data['user_id'] = Auth::id();
                 } else {
-                    // Not logged in (or is admin doing a test?), try to find user by phone
                     $user = User::where('phone', $normalizedPhone)->where('role', '!=', 'admin')->first();
                     
                     if (! $user) {
-                        // Create new user if not found
+                        Log::info('Creating new guest user');
                         $email = $normalizedPhone.'@phone.local';
                         if (User::where('email', $email)->exists()) {
                             $email = $normalizedPhone.'+'.Str::random(6).'@phone.local';
@@ -161,23 +159,25 @@ class PaymentConfirmController extends Controller
                             'name' => 'User'.substr($normalizedPhone, -4),
                             'email' => $email,
                             'phone' => $normalizedPhone,
-                            'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)), // Secure random password
+                            'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)),
                             'role' => 'user',
                         ]);
                     }
                     
-                    // Auto-login the found/created user so they can see their inbox/orders
+                    Log::info('Logging in user: ' . $user->id);
                     Auth::login($user, true);
                     $data['user_id'] = $user->id;
                 }
             } else {
-                // Fallback if no phone (shouldn't happen due to validation)
                 $data['user_id'] = Auth::id(); 
             }
 
+            Log::info('Creating KpayOrder');
             KpayOrder::create($data);
+            Log::info('KpayOrder created');
 
             if (!empty($data['user_id'])) {
+                Log::info('Creating notification');
                 $game = strtoupper($data['game_type']);
                 $product = $data['product_name'] ?: $data['product_id'];
                 
@@ -189,6 +189,8 @@ class PaymentConfirmController extends Controller
                     'is_read' => false,
                 ]);
             }
+
+            Log::info('Order processing completed in ' . (microtime(true) - $startTime) . 's');
 
             if ($request->expectsJson()) {
                 return response()->json([
