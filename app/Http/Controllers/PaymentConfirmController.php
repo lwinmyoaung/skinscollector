@@ -309,6 +309,9 @@ class PaymentConfirmController extends Controller
                 }
 
                 for ($i = 0; $i < $quantity; $i++) {
+                    if ($i > 0) {
+                        sleep(3); // Wait 3 seconds to prevent rate limiting
+                    }
                     $result = $service->buyProduct(
                         $order->player_id,
                         (string) ($order->server_id ?? ''),
@@ -331,6 +334,9 @@ class PaymentConfirmController extends Controller
                 }
 
                 for ($i = 0; $i < $quantity; $i++) {
+                    if ($i > 0) {
+                        sleep(3);
+                    }
                     $result = $service->order(
                         $order->player_id,
                         $order->product_id
@@ -359,6 +365,9 @@ class PaymentConfirmController extends Controller
                 $amount = $product->diamonds;
 
                 for ($i = 0; $i < $quantity; $i++) {
+                    if ($i > 0) {
+                        sleep(3);
+                    }
                     $result = $service->order(
                         $order->player_id,
                         (string) ($order->server_id ?? ''),
@@ -390,6 +399,9 @@ class PaymentConfirmController extends Controller
                 $amount = $product->diamonds;
 
                 for ($i = 0; $i < $quantity; $i++) {
+                    if ($i > 0) {
+                        sleep(3);
+                    }
                     $result = $service->order(
                         $order->player_id,
                         $order->product_id,
