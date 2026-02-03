@@ -23,7 +23,7 @@
                         <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
                             <div class="card-body text-center p-4 d-flex flex-column align-items-center justify-content-center">
                                 <div class="mb-3" style="width: 100%; display: flex; align-items: center; justify-content: center;">
-                                    <img src="{{ asset('adminimages/images/paymentmethodphoto/' . $method->image) }}" 
+                                    <img src="{{ $method->image_url }}" 
                                          alt="{{ $method->name }}" 
                                          class="img-fluid" 
                                          loading="lazy"

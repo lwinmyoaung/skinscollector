@@ -13,4 +13,17 @@ class PaymentMethod extends Model
         'image',
         'phone_number',
     ];
+
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image) {
+            return asset('adminimages/default_payment.jpg');
+        }
+        
+        if (\Illuminate\Support\Str::startsWith($this->image, 'payment_methods/')) {
+            return asset('storage/' . $this->image);
+        }
+        
+        return asset('adminimages/images/paymentmethodphoto/' . $this->image);
+    }
 }

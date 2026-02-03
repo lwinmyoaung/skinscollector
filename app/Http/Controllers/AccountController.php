@@ -23,12 +23,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use App\Traits\ImageUploadTrait;
 
 class AccountController extends Controller
 {
-    use ImageUploadTrait;
-
     /**
      * Display a listing of the resource.
      */
@@ -72,7 +69,7 @@ class AccountController extends Controller
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('adminimages/'.$file),
+                    'url' => asset('storage/'.$file),
                     'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
                     'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
                 ];
@@ -93,7 +90,7 @@ class AccountController extends Controller
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('adminimages/'.$file),
+                    'url' => asset('storage/'.$file),
                     'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
                     'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
                 ];
@@ -116,7 +113,7 @@ class AccountController extends Controller
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('adminimages/'.$file),
+                    'url' => asset('storage/'.$file),
                     'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
                     'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
                 ];
@@ -141,8 +138,8 @@ class AccountController extends Controller
         ]);
 
         foreach ($validated['images'] as $image) {
-            $filename = Str::random(40) . '.' . $image->getClientOriginalExtension();
-            $this->optimizeAndStoreImage($image, 'ads/slides', $filename);
+            // Option 1: Fast Storage Flow
+            $image->store('ads/slides', 'public');
         }
 
         Cache::forget('home.slides');
@@ -191,8 +188,7 @@ class AccountController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
         }
 
-        $filename = Str::random(40) . '.' . $validated['entry_image']->getClientOriginalExtension();
-        $this->optimizeAndStoreImage($validated['entry_image'], $directory, $filename);
+        $validated['entry_image']->store($directory, 'public');
 
         Cache::forget('layout.entry_ad');
 
@@ -231,8 +227,7 @@ class AccountController extends Controller
             \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
         }
 
-        $filename = Str::random(40) . '.' . $validated['app_icon']->getClientOriginalExtension();
-        $this->optimizeAndStoreImage($validated['app_icon'], $directory, $filename);
+        $validated['app_icon']->store($directory, 'public');
 
         return redirect()->route('admin.dashboard')->with('success', 'App icon updated successfully.');
     }

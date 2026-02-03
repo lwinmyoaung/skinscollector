@@ -17,14 +17,14 @@
         <td>{{ $order->kpay_phone }}</td>
         <td>
             <div class="d-flex align-items-center gap-2">
-                <img src="{{ asset('adminimages/topups/' . $order->transaction_image) }}"
+                <img src="{{ $order->transaction_image_url }}"
                         alt="KPay Screenshot"
                         class="rounded border flex-shrink-0"
                         loading="lazy"
                         decoding="async"
                         style="height: 40px; width: auto; max-width: 60px; object-fit: cover; cursor: pointer;"
-                        onclick="window.open('{{ asset('adminimages/topups/' . $order->transaction_image) }}', '_blank')">
-                <a href="{{ asset('adminimages/topups/' . $order->transaction_image) }}"
+                        onclick="window.open('{{ $order->transaction_image_url }}', '_blank')">
+                <a href="{{ $order->transaction_image_url }}"
                     target="_blank"
                     class="btn btn-sm btn-outline-primary flex-shrink-0">
                     View

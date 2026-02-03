@@ -21,4 +21,17 @@ class KpayOrder extends Model
         'transaction_image',
         'status',
     ];
+
+    public function getTransactionImageUrlAttribute()
+    {
+        if (!$this->transaction_image) {
+            return asset('adminimages/default.jpg');
+        }
+        
+        if (\Illuminate\Support\Str::startsWith($this->transaction_image, 'topups/')) {
+            return asset('storage/' . $this->transaction_image);
+        }
+        
+        return asset('adminimages/topups/' . $this->transaction_image);
+    }
 }

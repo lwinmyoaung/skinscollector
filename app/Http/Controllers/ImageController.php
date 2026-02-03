@@ -4,13 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
-use App\Traits\ImageUploadTrait;
 use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
-    use ImageUploadTrait;
-
     public function __construct()
     {
         $this->middleware(['auth', 'admin']);
@@ -43,11 +40,10 @@ class ImageController extends Controller
         $pm->name = $request->name;
         $pm->phone_number = $request->phone_number;
 
-        // Image Upload
-        $imageName = date('YmdHis').'.'.request()->image->getClientOriginalExtension();
-        $this->optimizeAndStoreImage(request()->image, 'images/paymentmethodphoto', $imageName);
+        // Option 1: Fast Storage Flow
+        $path = request()->image->store('payment_methods', 'public');
 
-        $pm->image = $imageName;
+        $pm->image = $path;
         $pm->save();
 
         return redirect('admin/paymentmethod')->with('message', 'New Payment successfully added.');
@@ -80,10 +76,9 @@ class ImageController extends Controller
         $paymentmethod->phone_number = $request->phone_number;
 
         if ($request->image) {
-            // Image Upload
-            $imageName = date('YmdHis').'.'.request()->image->getClientOriginalExtension();
-            $this->optimizeAndStoreImage(request()->image, 'images/paymentmethodphoto', $imageName);
-            $paymentmethod->image = $imageName;
+            // Option 1: Fast Storage Flow
+            $path = request()->image->store('payment_methods', 'public');
+            $paymentmethod->image = $path;
         }
 
         $paymentmethod->save();

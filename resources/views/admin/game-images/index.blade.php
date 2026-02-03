@@ -40,7 +40,7 @@
                                     <small class="text-muted">{{ $game->game_code }}</small>
                                 </td>
                                 <td>
-                                    <img src="{{ asset('adminimages/' . $game->image_path) }}" alt="{{ $game->game_name }}" loading="lazy" decoding="async" class="img-thumbnail" style="max-height: 80px;">
+                                    <img src="{{ $game->image_url }}" alt="{{ $game->game_name }}" loading="lazy" decoding="async" class="img-thumbnail" style="max-height: 80px;">
                                 </td>
                                 <td>{{ $game->updated_at->format('Y-m-d H:i') }}</td>
                                 <td>

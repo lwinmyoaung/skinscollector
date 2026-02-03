@@ -58,16 +58,12 @@ class PaymentConfirmController extends Controller
 
             if ($request->hasFile('transaction_image')) {
                 $file = $request->file('transaction_image');
-                $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
                 
-                // Direct upload to adminimages/topups folder
-                $destinationPath = public_path('adminimages/topups');
-                if (!file_exists($destinationPath)) {
-                    mkdir($destinationPath, 0777, true);
-                }
-                $file->move($destinationPath, $filename);
+                // Option 1: Fast Storage Flow
+                // Upload to storage/app/public/topups
+                $path = $file->store('topups', 'public');
                 
-                $data['transaction_image'] = $filename;
+                $data['transaction_image'] = $path;
             }
 
             $zoneId = $request->input('zone_id');
@@ -510,7 +506,13 @@ class PaymentConfirmController extends Controller
 
         foreach ($orders as $order) {
             if ($order->transaction_image) {
-                $imagePath = 'topups/' . $order->transaction_image;
+                $imagePath = $order->transaction_image;
+                // If it doesn't start with topups/ (old logic), append it
+                // If it does (new logic), use as is
+                if (!\Illuminate\Support\Str::startsWith($imagePath, 'topups/')) {
+                    $imagePath = 'topups/' . $imagePath;
+                }
+                
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($imagePath)) {
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($imagePath);
                 }
