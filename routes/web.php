@@ -119,6 +119,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('confirm-orders/cleanup', [\App\Http\Controllers\PaymentConfirmController::class, 'deleteOldOrders'])->name('admin.confirm.orders.delete_old');
     Route::get('confirm-orders/fetch', [\App\Http\Controllers\PaymentConfirmController::class, 'fetchOrders'])->name('admin.confirm.orders.fetch');
     Route::post('confirm-orders/{order}/approve', [\App\Http\Controllers\PaymentConfirmController::class, 'approve'])->name('admin.confirm.orders.approve');
+    Route::post('confirm-orders/{order}/approve-item', [\App\Http\Controllers\PaymentConfirmController::class, 'approveItem'])->name('admin.confirm.orders.approve_item');
+    Route::post('confirm-orders/{order}/finalize', [\App\Http\Controllers\PaymentConfirmController::class, 'finalizeApproval'])->name('admin.confirm.orders.finalize');
     Route::post('confirm-orders/{order}/reject', [\App\Http\Controllers\PaymentConfirmController::class, 'reject'])->name('admin.confirm.orders.reject');
 });
 

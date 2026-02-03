@@ -2,270 +2,466 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\KpayOrder;
-use App\Models\Order;
+use App\Models\AdminMcggProduct;
 use App\Models\AdminMlProduct;
 use App\Models\AdminPubgProduct;
-use App\Models\AdminMcggProduct;
 use App\Models\AdminWwmProduct;
+use App\Models\KpayOrder;
 use App\Models\Notification;
+use App\Models\Order;
+use App\Models\PaymentMethod;
+use App\Models\User;
+use App\Models\UserMcggProduct;
 use App\Models\UserMlProduct;
 use App\Models\UserPubgProduct;
-use App\Models\UserMcggProduct;
 use App\Models\UserWwmProduct;
-use App\Models\PaymentMethod;
-use App\Services\SoGameService;
 use App\Services\LaravelPubgService;
 use App\Services\McggGameService;
+use App\Services\SoGameService;
 use App\Services\WwmGameService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
-use App\Models\User;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PaymentConfirmController extends Controller
 {
+    public function userIndex()
+    {
+        $orders = KpayOrder::where('user_id', Auth::id())
+            ->latest()
+            ->paginate(10);
+
+        return view('user.orders', compact('orders'));
+    }
+
+    public function fetchUserOrders()
+    {
+        $orders = KpayOrder::where('user_id', Auth::id())
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'created_at' => $order->created_at->format('Y-m-d H:i'),
+                    'game_type' => strtoupper($order->game_type),
+                    'product_name' => $order->product_name ?: $order->product_id,
+                    'amount' => number_format($order->amount),
+                    'status' => ucfirst($order->status),
+                    'status_color' => match ($order->status) {
+                        'approved', 'success' => 'success',
+                        'cancelled', 'rejected' => 'danger',
+                        'pending' => 'warning',
+                        default => 'secondary',
+                    },
+                ];
+            });
+
+        return response()->json(['orders' => $orders]);
+    }
+
     public function store(Request $request)
     {
-        try {
-            Log::info('Payment submission started', ['phone' => $request->input('kpay_phone') ?? 'N/A']);
-            $startTime = microtime(true);
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'transaction_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp,heic|max:5120',
+            'kpay_phone' => 'required|string',
+            'game_type' => 'required|string',
+            'player_id' => 'required|string',
+            'server_id' => 'nullable|string',
+            'product_id' => 'required|string',
+            'amount' => 'required|numeric',
+            'product_name' => 'nullable|string',
+            'payment_method' => 'nullable|string',
+            'quantity' => 'nullable|integer|min:1',
+            'region' => 'nullable|string',
+            'zone_id' => 'nullable|string',
+        ]);
 
-            $validator = Validator::make($request->all(), [
-                'game_type' => 'required|string|in:mlbb,pubg,mcgg,wwm',
-                'product_id' => 'required|string',
-                'player_id' => 'required|string',
-                'server_id' => 'nullable|string',
-                'region' => 'nullable|string',
-                'payment_method' => 'required|string|max:50',
-                'kpay_phone' => 'required|string',
-                'amount' => 'required|numeric|min:0',
-                'transaction_image' => 'required|image|max:51200',
-                'quantity' => 'nullable|integer|min:1',
-            ]);
-
-            if ($validator->fails()) {
-                Log::warning('Order validation failed', ['errors' => $validator->errors()->toArray(), 'input' => $request->except('transaction_image')]);
-                return redirect()->route('payment.retry')
-                    ->withErrors($validator)
-                    ->withInput();
+        if ($validator->fails()) {
+            Log::warning('Order validation failed', ['errors' => $validator->errors()->toArray(), 'input' => $request->except('transaction_image')]);
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
             }
 
-            $data = $validator->validated();
+            return redirect()->route('payment.retry')
+                ->withErrors($validator)
+                ->withInput();
+        }
 
-            if ($request->hasFile('transaction_image')) {
-                $file = $request->file('transaction_image');
-                
-                // Option 1: Fast Storage Flow
-                // Upload to storage/app/public/topups
-                $path = $file->store('topups', 'public');
-                
-                $data['transaction_image'] = $path;
-            }
+        $data = $validator->validated();
 
-            $zoneId = $request->input('zone_id');
-            if (! ($data['server_id'] ?? null) && $zoneId) {
-                $data['server_id'] = $zoneId;
-            }
+        if ($request->hasFile('transaction_image')) {
+            $file = $request->file('transaction_image');
+            
+            // Option 1: Fast Storage Flow
+            // Upload to storage/app/public/topups
+            $path = $file->store('topups', 'public');
+            
+            $data['transaction_image'] = $path;
+        }
 
-            $productName = $request->input('product_name');
+        $zoneId = $request->input('zone_id');
+        if (! ($data['server_id'] ?? null) && $zoneId) {
+            $data['server_id'] = $zoneId;
+        }
 
-            if (! $productName) {
-                if ($data['game_type'] === 'mlbb') {
-                    $query = UserMlProduct::where('product_id', $data['product_id']);
-                    if (! empty($data['region'])) {
-                        $query->where('region', $data['region']);
-                    }
-                    $productName = optional($query->first())->name;
-                } elseif ($data['game_type'] === 'pubg') {
-                    $productName = optional(UserPubgProduct::where('product_id', $data['product_id'])->first())->name;
-                } elseif ($data['game_type'] === 'mcgg') {
-                    $productName = optional(UserMcggProduct::where('product_id', $data['product_id'])->first())->name;
-                } elseif ($data['game_type'] === 'wwm') {
-                    $productName = optional(UserWwmProduct::where('product_id', $data['product_id'])->first())->name;
-                }
-            }
+        $productName = $request->input('product_name');
 
-            $data['product_name'] = $productName ?: '';
-
-            $amount = 0;
+        if (! $productName) {
             if ($data['game_type'] === 'mlbb') {
                 $query = UserMlProduct::where('product_id', $data['product_id']);
                 if (! empty($data['region'])) {
                     $query->where('region', $data['region']);
                 }
-                $product = $query->first();
-                $amount = (int) ($product->price ?? 0);
+                $productName = optional($query->first())->name;
             } elseif ($data['game_type'] === 'pubg') {
-                $product = UserPubgProduct::where('product_id', $data['product_id'])->first();
-                $amount = (int) ($product->price ?? 0);
+                $productName = optional(UserPubgProduct::where('product_id', $data['product_id'])->first())->name;
             } elseif ($data['game_type'] === 'mcgg') {
-                $product = UserMcggProduct::where('product_id', $data['product_id'])->first();
-                $amount = (int) ($product->price ?? 0);
+                $productName = optional(UserMcggProduct::where('product_id', $data['product_id'])->first())->name;
             } elseif ($data['game_type'] === 'wwm') {
-                $product = UserWwmProduct::where('product_id', $data['product_id'])->first();
-                $amount = (int) ($product->price ?? 0);
+                $productName = optional(UserWwmProduct::where('product_id', $data['product_id'])->first())->name;
             }
+        }
 
-            $quantity = (int) ($request->input('quantity') ?? 1);
-            if ($quantity < 1) $quantity = 1;
-            $data['quantity'] = $quantity;
+        $data['product_name'] = $productName ?: '';
 
-            if ($amount > 0) {
-                $amount = $amount * $quantity;
+        $amount = 0;
+        if ($data['game_type'] === 'mlbb') {
+            $query = UserMlProduct::where('product_id', $data['product_id']);
+            if (! empty($data['region'])) {
+                $query->where('region', $data['region']);
             }
+            $product = $query->first();
+            $amount = (int) ($product->price ?? 0);
+        } elseif ($data['game_type'] === 'pubg') {
+            $product = UserPubgProduct::where('product_id', $data['product_id'])->first();
+            $amount = (int) ($product->price ?? 0);
+        } elseif ($data['game_type'] === 'mcgg') {
+            $product = UserMcggProduct::where('product_id', $data['product_id'])->first();
+            $amount = (int) ($product->price ?? 0);
+        } elseif ($data['game_type'] === 'wwm') {
+            $product = UserWwmProduct::where('product_id', $data['product_id'])->first();
+            $amount = (int) ($product->price ?? 0);
+        }
 
-            $data['amount'] = $amount > 0 ? $amount : $data['amount'];
+        $quantity = (int) ($request->input('quantity') ?? 1);
+        if ($quantity < 1) $quantity = 1;
+        $data['quantity'] = $quantity;
 
-            $data['status'] = 'pending';
+        if ($amount > 0) {
+            $amount = $amount * $quantity;
+        }
 
-            $methodKey = strtolower($data['payment_method'] ?? 'kpay');
-            $data['payment_method'] = $methodKey;
+        $data['amount'] = $amount > 0 ? $amount : $data['amount'];
 
-            $methodLabel = strtoupper($methodKey);
-            if (Schema::hasTable('payment_methods')) {
-                $pm = PaymentMethod::whereRaw('LOWER(name) = ?', [$methodKey])->first();
-                if ($pm) {
-                    $methodLabel = $pm->name;
-                }
+        $data['status'] = 'pending';
+
+        $methodKey = strtolower($data['payment_method'] ?? 'kpay');
+        $data['payment_method'] = $methodKey;
+
+        $methodLabel = strtoupper($methodKey);
+        if (Schema::hasTable('payment_methods')) {
+            $pm = PaymentMethod::whereRaw('LOWER(name) = ?', [$methodKey])->first();
+            if ($pm) {
+                $methodLabel = $pm->name;
             }
+        }
 
-            $normalizedPhone = preg_replace('/\D+/', '', (string) ($data['kpay_phone'] ?? ''));
-            if ($normalizedPhone) {
-                $data['kpay_phone'] = $normalizedPhone;
-            }
+        $normalizedPhone = preg_replace('/\D+/', '', (string) ($data['kpay_phone'] ?? ''));
+        if ($normalizedPhone) {
+            $data['kpay_phone'] = $normalizedPhone;
+        }
 
-            // Guest checkout logic: Find or create user by phone, then auto-login
-            if ($normalizedPhone) {
-                Log::info('Processing guest checkout user logic');
-                if (Auth::check() && Auth::user()->role !== 'admin') {
-                    $data['user_id'] = Auth::id();
-                } else {
-                    $user = User::where('phone', $normalizedPhone)->where('role', '!=', 'admin')->first();
-                    
-                    if (! $user) {
-                        Log::info('Creating new guest user');
-                        $email = $normalizedPhone.'@phone.local';
-                        if (User::where('email', $email)->exists()) {
-                            $email = $normalizedPhone.'+'.Str::random(6).'@phone.local';
-                        }
-                        
-                        $user = User::create([
-                            'name' => 'User'.substr($normalizedPhone, -4),
-                            'email' => $email,
-                            'phone' => $normalizedPhone,
-                            'password' => \Illuminate\Support\Facades\Hash::make(Str::random(16)),
-                            'role' => 'user',
-                        ]);
+        // Guest checkout logic: Find or create user by phone, then auto-login
+        if ($normalizedPhone) {
+            Log::info('Processing guest checkout user logic');
+            if (Auth::check() && Auth::user()->role !== 'admin') {
+                $data['user_id'] = Auth::id();
+            } else {
+                $user = User::where('phone', $normalizedPhone)->where('role', '!=', 'admin')->first();
+                
+                if (! $user) {
+                    $email = $normalizedPhone.'@phone.local';
+                    // Check for existing email to avoid collision if phone was different but email generated same
+                    if (User::where('email', $email)->exists()) {
+                        $email = $normalizedPhone.'+'.Str::random(6).'@phone.local';
                     }
                     
-                    Log::info('Logging in user: ' . $user->id);
-                    Auth::login($user, true);
-                    $data['user_id'] = $user->id;
+                    Log::info('Creating new guest user', ['phone' => $normalizedPhone]);
+                    $user = User::create([
+                        'name' => 'User'.substr($normalizedPhone, -4),
+                        'email' => $email,
+                        'phone' => $normalizedPhone,
+                        'password' => Str::random(16), // Random password, user can't login unless they reset or we provide
+                        'balance' => 0,
+                        'role' => 'user',
+                    ]);
                 }
-            } else {
-                $data['user_id'] = Auth::id(); 
-            }
-
-            Log::info('Creating KpayOrder');
-            KpayOrder::create($data);
-            Log::info('KpayOrder created');
-
-            if (!empty($data['user_id'])) {
-                Log::info('Creating notification');
-                $game = strtoupper($data['game_type']);
-                $product = $data['product_name'] ?: $data['product_id'];
                 
-                Notification::create([
-                    'user_id' => $data['user_id'],
-                    'title' => 'Order Submitted',
-                    'message' => "Your {$game} order for {$product} has been submitted. Status: Pending.",
-                    'type' => 'info',
-                    'is_read' => false,
-                ]);
+                Auth::login($user);
+                $data['user_id'] = $user->id;
             }
-
-            Log::info('Order processing completed in ' . (microtime(true) - $startTime) . 's');
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Your '.$methodLabel.' order has been submitted. We will process it shortly.',
-                    'redirect_url' => route('payment.success')
-                ]);
-            }
-
-            return redirect()->route('payment.success');
-
-        } catch (\Exception $e) {
-            Log::error('Order submission error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString(), 'input' => $request->except('transaction_image')]);
-            
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An error occurred while processing your request. Please try again.'
-                ], 500);
-            }
-
-            return redirect()->route('payment.retry')
-                ->with('error', 'An error occurred while processing your request. Please try again.')
-                ->withInput();
         }
+
+        KpayOrder::create($data);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'redirect_url' => route('payment.success'),
+                'message' => 'Payment submitted successfully!'
+            ]);
+        }
+
+        return redirect()->route('payment.success')->with('success', 'Payment submitted successfully!');
     }
 
     public function adminIndex(Request $request)
     {
-        $query = KpayOrder::query()->latest();
+        $orders = $this->getFilteredOrders($request);
 
-        $hasPaymentMethodColumn = Schema::hasColumn('kpay_orders', 'payment_method');
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        if ($request->filled('game_type')) {
-            $query->where('game_type', $request->input('game_type'));
-        }
-
-        if ($hasPaymentMethodColumn && $request->filled('payment_method')) {
-            $query->where('payment_method', $request->input('payment_method'));
-        }
-
-        $orders = $query->paginate(25);
-
-        $statuses = ['pending', 'approved', 'failed', 'cancelled'];
         $games = ['mlbb', 'pubg', 'mcgg', 'wwm'];
+        $statuses = ['pending', 'approved', 'rejected', 'cancelled'];
+        $paymentMethods = PaymentMethod::all();
 
-        $paymentMethods = $hasPaymentMethodColumn ? PaymentMethod::all() : collect();
-
-        return view('admin.confirm_orders', compact('orders', 'statuses', 'games', 'paymentMethods'));
+        return view('admin.confirm_orders', compact('orders', 'games', 'statuses', 'paymentMethods'));
     }
 
-    public function userIndex(Request $request)
+    public function fetchOrders(Request $request)
     {
-        $user = Auth::user();
+        $orders = $this->getFilteredOrders($request);
 
-        $query = KpayOrder::query()
-            ->where('user_id', $user->id)
-            ->latest();
+        // Render the partial view
+        $html = view('admin.partials.confirm_orders_table', compact('orders'))->render();
+
+        return response()->json(['html' => $html]);
+    }
+
+    private function getFilteredOrders(Request $request)
+    {
+        $query = KpayOrder::latest();
 
         if ($request->filled('game_type')) {
-            $query->where('game_type', $request->input('game_type'));
+            $query->where('game_type', $request->game_type);
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $query->where('status', $request->status);
         }
 
-        $orders = $query->paginate(15);
+        if ($request->filled('payment_method')) {
+            $query->where('payment_method', $request->payment_method);
+        }
 
-        $statuses = ['pending', 'approved', 'failed', 'cancelled'];
-        $games = ['mlbb', 'pubg', 'mcgg', 'wwm'];
+        return $query->paginate(20);
+    }
 
-        return view('user.kpay_orders', compact('orders', 'statuses', 'games'));
+    // New granular approval method for JS-based progress
+    public function approveItem(Request $request, KpayOrder $order)
+    {
+        if ($order->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Order not pending'], 400);
+        }
+
+        try {
+            // Guest User Logic (Ensure user exists before buying)
+            if (empty($order->user_id) && ! empty($order->kpay_phone)) {
+                $normalizedPhone = preg_replace('/\D+/', '', (string) $order->kpay_phone);
+                if ($normalizedPhone) {
+                    $user = User::where('phone', $normalizedPhone)->where('role', '!=', 'admin')->first();
+                    if (! $user) {
+                        $email = $normalizedPhone.'@phone.local';
+                        if (User::where('email', $email)->exists()) {
+                            $email = $normalizedPhone.'+'.Str::random(6).'@phone.local';
+                        }
+                        $user = User::create([
+                            'name' => 'User'.substr($normalizedPhone, -4),
+                            'email' => $email,
+                            'phone' => $normalizedPhone,
+                            'password' => Str::random(16),
+                            'balance' => 0,
+                            'role' => 'user',
+                        ]);
+                    }
+                    $order->user_id = $user->id;
+                    $order->save();
+                }
+            }
+
+            // Game Purchase Logic
+            if ($order->game_type === 'mlbb') {
+                $service = new SoGameService;
+                // Optional: Check role again or assume it was checked? 
+                // Let's check role to be safe, it's fast.
+                $check = $service->checkRole($order->player_id, (string) ($order->server_id ?? ''));
+                if (! $check) {
+                    return response()->json(['success' => false, 'message' => 'Game account not found'], 400);
+                }
+
+                $result = $service->buyProduct(
+                    $order->player_id,
+                    (string) ($order->server_id ?? ''),
+                    $order->product_id,
+                    null,
+                    1
+                );
+
+                if (! ($result['success'] ?? false)) {
+                    $msg = $result['message'] ?? 'Unknown error';
+                    return response()->json(['success' => false, 'message' => $msg], 500);
+                }
+
+            } elseif ($order->game_type === 'pubg') {
+                $service = new LaravelPubgService;
+                $check = $service->checkId($order->player_id);
+                if (($check['result'] ?? 0) !== 1) {
+                    return response()->json(['success' => false, 'message' => 'Invalid PUBG ID'], 400);
+                }
+
+                $result = $service->order($order->player_id, $order->product_id);
+                if (! ($result['success'] ?? false)) {
+                    $msg = $result['message'] ?? 'Unknown error';
+                    return response()->json(['success' => false, 'message' => $msg], 500);
+                }
+
+            } elseif ($order->game_type === 'mcgg') {
+                $service = new McggGameService;
+                $check = $service->checkId($order->player_id, (string) ($order->server_id ?? ''));
+                if (! ($check['ok'] ?? false) && ! ($check['success'] ?? false)) {
+                    return response()->json(['success' => false, 'message' => 'MCGG player not found'], 400);
+                }
+
+                $product = UserMcggProduct::where('product_id', $order->product_id)->where('status', 1)->first();
+                if (!$product) return response()->json(['success' => false, 'message' => 'Product not found'], 400);
+
+                $result = $service->order(
+                    $order->player_id,
+                    (string) ($order->server_id ?? ''),
+                    $order->product_id,
+                    null,
+                    $product->diamonds
+                );
+
+                if (! ($result['ok'] ?? false)) {
+                    $msg = $result['error'] ?? $result['message'] ?? 'Unknown error';
+                    return response()->json(['success' => false, 'message' => $msg], 500);
+                }
+
+            } elseif ($order->game_type === 'wwm') {
+                $service = new WwmGameService;
+                $check = $service->checkId($order->player_id, (string) ($order->server_id ?? ''));
+                if (! ($check['ok'] ?? false) && ! ($check['success'] ?? false)) {
+                    return response()->json(['success' => false, 'message' => 'WWM player not found'], 400);
+                }
+
+                $product = UserWwmProduct::where('product_id', $order->product_id)->where('status', 1)->first();
+                if (!$product) return response()->json(['success' => false, 'message' => 'Product not found'], 400);
+
+                $result = $service->order(
+                    $order->player_id,
+                    $order->product_id,
+                    (string) ($order->server_id ?? ''),
+                    null,
+                    $product->diamonds,
+                    null,
+                    'usecoin',
+                    1
+                );
+
+                if (! ($result['ok'] ?? false)) {
+                    $msg = $result['error'] ?? $result['message'] ?? 'Unknown error';
+                    return response()->json(['success' => false, 'message' => $msg], 500);
+                }
+
+            } else {
+                return response()->json(['success' => false, 'message' => 'Unsupported game type'], 400);
+            }
+
+            return response()->json(['success' => true]);
+
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function finalizeApproval(Request $request, KpayOrder $order)
+    {
+        if ($order->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Order already processed'], 400);
+        }
+
+        try {
+            $quantity = (int) ($order->quantity ?? 1);
+            if ($quantity < 1) $quantity = 1;
+
+            $sellingPrice = (int) ($order->amount ?? 0);
+            $costPrice = 0;
+
+            if ($order->game_type === 'mlbb') {
+                $adminProductQuery = AdminMlProduct::where('product_id', $order->product_id);
+                if (! empty($order->region)) {
+                    $adminProductQuery->where('region', $order->region);
+                }
+                $adminProduct = $adminProductQuery->first();
+                $costPrice = (int) ($adminProduct->price ?? 0);
+            } elseif ($order->game_type === 'pubg') {
+                $adminProduct = AdminPubgProduct::where('product_id', $order->product_id)->first();
+                $costPrice = (int) ($adminProduct->price ?? 0);
+            } elseif ($order->game_type === 'mcgg') {
+                $adminProduct = AdminMcggProduct::where('product_id', $order->product_id)->first();
+                $costPrice = (int) ($adminProduct->price ?? 0);
+            } elseif ($order->game_type === 'wwm') {
+                $adminProduct = AdminWwmProduct::where('product_id', $order->product_id)->first();
+                $costPrice = (int) ($adminProduct->price ?? 0);
+            }
+
+            $costPrice = $costPrice * $quantity;
+            $profit = $sellingPrice - $costPrice;
+
+            if ($order->user_id && $sellingPrice > 0) {
+                Order::create([
+                    'user_id' => $order->user_id,
+                    'game' => $order->game_type,
+                    'product_id' => $order->product_id,
+                    'product_name' => $order->product_name ?: $order->product_id,
+                    'player_id' => $order->player_id,
+                    'server_id' => $order->server_id,
+                    'selling_price' => $sellingPrice,
+                    'cost_price' => $costPrice,
+                    'profit' => $profit,
+                    'status' => 'success',
+                ]);
+            }
+
+            $order->status = 'approved';
+            $order->save();
+
+            if ($order->user_id) {
+                $game = strtoupper($order->game_type);
+                $product = $order->product_name ?: $order->product_id;
+
+                Notification::create([
+                    'user_id' => $order->user_id,
+                    'title' => 'Order Approved',
+                    'message' => "Your {$game} order for {$product} has been approved and delivered.",
+                    'type' => 'success',
+                    'is_read' => false,
+                ]);
+            }
+
+            return response()->json(['success' => true]);
+
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     public function approve(KpayOrder $order)
@@ -538,45 +734,5 @@ class PaymentConfirmController extends Controller
         }
 
         return redirect()->back()->with('success', "Deleted {$count} orders older than {$days} days.");
-    }
-
-    public function fetchOrders(Request $request)
-    {
-        $query = KpayOrder::query()->latest();
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        if ($request->filled('game_type')) {
-            $query->where('game_type', $request->input('game_type'));
-        }
-
-        if (Schema::hasColumn('kpay_orders', 'payment_method') && $request->filled('payment_method')) {
-            $query->where('payment_method', $request->input('payment_method'));
-        }
-
-        $orders = $query->paginate(25);
-        $pendingCount = KpayOrder::where('status', 'pending')->count();
-
-        return response()->json([
-            'html' => view('admin.partials.confirm_orders_table', compact('orders'))->render(),
-            'pending_count' => $pendingCount,
-        ]);
-    }
-
-    public function fetchPendingList(Request $request)
-    {
-        $orders = KpayOrder::where('status', 'pending')
-            ->latest()
-            ->take(5)
-            ->get(['id', 'game_type', 'product_name', 'product_id', 'amount', 'created_at', 'kpay_phone', 'payment_method']);
-
-        $count = KpayOrder::where('status', 'pending')->count();
-
-        return response()->json([
-            'count' => $count,
-            'orders' => $orders,
-        ]);
     }
 }

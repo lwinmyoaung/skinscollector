@@ -45,13 +45,11 @@
         <td>
             @if($order->status === 'pending')
                 <div class="d-flex gap-2">
-                    <form method="POST" action="{{ route('admin.confirm.orders.approve', $order) }}">
-                        @csrf
-                        <button class="btn btn-success btn-sm"
-                            onclick="return confirm('Approve and send this order to the game?');">
-                            Approve & Deliver
-                        </button>
-                    </form>
+                    <button type="button" 
+                        class="btn btn-success btn-sm"
+                        onclick="startApprovalProcess({{ $order->id }}, {{ $order->quantity ?? 1 }})">
+                        Approve & Deliver
+                    </button>
                     <form method="POST" action="{{ route('admin.confirm.orders.reject', $order) }}">
                         @csrf
                         <button class="btn btn-danger btn-sm"

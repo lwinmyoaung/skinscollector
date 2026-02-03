@@ -247,7 +247,19 @@
                     },
                     body: formData
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            try {
+                                const json = JSON.parse(text);
+                                throw new Error(json.message || response.statusText);
+                            } catch (e) {
+                                throw new Error(`Server Error (${response.status})`);
+                            }
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         if (btnText) btnText.textContent = 'Success!';

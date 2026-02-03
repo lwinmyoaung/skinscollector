@@ -128,6 +128,19 @@ class McggGameService extends BaseMiniappService
 
         // Successful redirect usually indicates order creation
         if (in_array($resp->status(), [200, 201, 202, 302, 303], true)) {
+            // Check for redirect to login page which indicates session failure
+            if ($resp->status() === 302) {
+                $location = $resp->header('Location');
+                if ($location && (str_contains($location, 'login') || str_contains($location, 'auth'))) {
+                    return [
+                        'ok' => false,
+                        'stage' => 'session_check',
+                        'error' => 'Session expired or invalid cookie. Redirected to login.',
+                        'attempts' => $attempts,
+                    ];
+                }
+            }
+
             return [
                 'ok' => true,
                 'shop_url' => $session['shopUrl'],

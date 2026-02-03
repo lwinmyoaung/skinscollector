@@ -125,7 +125,201 @@
     </div>
 </div>
 
+<!-- Approval Progress Modal -->
+<div class="modal fade" id="approvalProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Processing Order</h5>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p id="approvalStatusText" class="fw-bold">Initializing...</p>
+                    <div class="progress" style="height: 25px;">
+                        <div id="approvalProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                    </div>
+                </div>
+                <ul id="approvalLog" class="list-group list-group-flush small" style="max-height: 200px; overflow-y: auto;">
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="approvalCloseBtn" onclick="location.reload()" disabled>Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let approvalModal;
+
+    function startApprovalProcess(orderId, quantity) {
+        if (!confirm('Approve and send this order to the game?')) return;
+
+        if (!approvalModal) {
+            approvalModal = new bootstrap.Modal(document.getElementById('approvalProgressModal'));
+        }
+
+        const modalEl = document.getElementById('approvalProgressModal');
+        const statusText = document.getElementById('approvalStatusText');
+        const progressBar = document.getElementById('approvalProgressBar');
+        const logList = document.getElementById('approvalLog');
+        const closeBtn = document.getElementById('approvalCloseBtn');
+
+        // Reset UI
+        statusText.textContent = `Preparing to send ${quantity} items...`;
+        statusText.className = 'fw-bold'; 
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated'; 
+        logList.innerHTML = '';
+        closeBtn.disabled = true;
+        closeBtn.textContent = 'Done';
+        
+        approvalModal.show();
+
+        processItems(orderId, quantity, 0);
+    }
+
+    function processItems(orderId, totalQuantity, currentIndex) {
+        const statusText = document.getElementById('approvalStatusText');
+        const progressBar = document.getElementById('approvalProgressBar');
+        
+        // Check if we need to process more items
+        if (currentIndex < totalQuantity) {
+            const itemNum = currentIndex + 1;
+            statusText.textContent = `Sending item ${itemNum} of ${totalQuantity}...`;
+            addLog(`Item ${itemNum}: Sending request...`);
+
+            // Get CSRF token from meta tag (preferred) or fallback to form input
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                              document.querySelector('input[name="_token"]')?.value;
+            
+            const url = `{{ url('admin/confirm-orders') }}/${orderId}/approve-item`;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // Try to parse JSON error message if possible
+                    return response.text().then(text => {
+                        try {
+                            const json = JSON.parse(text);
+                            throw new Error(json.message || response.statusText);
+                        } catch (e) {
+                            throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+                        }
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    addLog(`Item ${itemNum}: Success`, 'text-success');
+                    const percent = Math.round((itemNum / totalQuantity) * 90); 
+                    progressBar.style.width = `${percent}%`;
+                    progressBar.textContent = `${percent}%`;
+                    
+                    // Process next item
+                    setTimeout(() => processItems(orderId, totalQuantity, currentIndex + 1), 3000); 
+                } else {
+                    statusText.textContent = `Error on item ${itemNum}`;
+                    statusText.classList.add('text-danger');
+                    addLog(`Item ${itemNum}: Failed - ${data.message}`, 'text-danger');
+                    document.getElementById('approvalCloseBtn').disabled = false;
+                }
+            })
+            .catch(error => {
+                statusText.textContent = `Network Error on item ${itemNum}`;
+                statusText.classList.add('text-danger');
+                addLog(`Item ${itemNum}: Network Error - ${error.message}`, 'text-danger');
+                document.getElementById('approvalCloseBtn').disabled = false;
+            });
+        } else {
+            // All items done, finalize
+            finalizeOrder(orderId);
+        }
+    }
+
+    function finalizeOrder(orderId) {
+        const statusText = document.getElementById('approvalStatusText');
+        const progressBar = document.getElementById('approvalProgressBar');
+
+        statusText.textContent = 'Finalizing order...';
+        addLog('Finalizing order status...', 'text-primary');
+
+        // Get CSRF token from meta tag (preferred) or fallback to form input
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                          document.querySelector('input[name="_token"]')?.value;
+
+        const url = `{{ url('admin/confirm-orders') }}/${orderId}/finalize`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    try {
+                        const json = JSON.parse(text);
+                        throw new Error(json.message || response.statusText);
+                    } catch (e) {
+                        throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+                    }
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                statusText.textContent = 'Order Completed Successfully!';
+                statusText.classList.add('text-success');
+                addLog('Order finalized.', 'text-success');
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+                progressBar.classList.remove('progress-bar-animated');
+                progressBar.classList.add('bg-success');
+                
+                const closeBtn = document.getElementById('approvalCloseBtn');
+                closeBtn.textContent = "Done (Reloading...)";
+                closeBtn.disabled = false;
+                
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                statusText.textContent = 'Error finalizing order';
+                statusText.classList.add('text-danger');
+                addLog(`Finalize Failed - ${data.message}`, 'text-danger');
+                document.getElementById('approvalCloseBtn').disabled = false;
+            }
+        })
+        .catch(error => {
+            statusText.textContent = 'Network Error during finalize';
+            statusText.classList.add('text-danger');
+            addLog(`Finalize Network Error - ${error.message}`, 'text-danger');
+            document.getElementById('approvalCloseBtn').disabled = false;
+        });
+    }
+
+    function addLog(message, className = '') {
+        const logList = document.getElementById('approvalLog');
+        const li = document.createElement('li');
+        li.className = `list-group-item py-1 ${className}`;
+        li.textContent = message;
+        logList.prepend(li);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Initial fetch to set the badge count
         fetchOrders();

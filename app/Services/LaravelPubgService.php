@@ -90,6 +90,19 @@ class LaravelPubgService extends BaseMiniappService
             $responseBody = (string) $response->body();
 
             if (in_array($statusCode, [200, 201, 302], true)) {
+                // Check for redirect to login page which indicates session failure
+                if ($statusCode === 302) {
+                    $location = $response->header('Location');
+                    if ($location && (str_contains($location, 'login') || str_contains($location, 'auth'))) {
+                        return [
+                            'success' => false,
+                            'status' => $statusCode,
+                            'message' => 'Session expired or invalid cookie. Redirected to login.',
+                            'data' => $responseBody,
+                        ];
+                    }
+                }
+
                 return [
                     'success' => true,
                     'status' => $statusCode,

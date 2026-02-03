@@ -146,9 +146,23 @@ class WwmGameService extends BaseMiniappService
             ];
 
             if ($resp->status() === 302 || in_array($resp->status(), [200, 201, 202, 303], true)) {
+                // Check for redirect to login page which indicates session failure
+                if ($resp->status() === 302) {
+                    $location = $resp->header('Location');
+                    if ($location && (str_contains($location, 'login') || str_contains($location, 'auth'))) {
+                        return [
+                            'ok' => false,
+                            'stage' => 'session_check',
+                            'error' => 'Session expired or invalid cookie. Redirected to login.',
+                            'attempts' => $attempts,
+                        ];
+                    }
+                }
+
                 return [
                     'ok' => true,
-                    'redirect_url' => $resp->header('Location'),
+                    'shop_url' => $session['shopUrl'],
+                    'location' => $resp->header('Location'),
                     'status' => $resp->status(),
                     'attempts' => $attempts,
                 ];

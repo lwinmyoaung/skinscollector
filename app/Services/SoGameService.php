@@ -64,6 +64,19 @@ class SoGameService extends BaseMiniappService
             // 4. Check Result
             // 302 Redirect is expected behavior for this shop
             if (in_array($statusCode, [200, 201, 302])) {
+                // Check for redirect to login page which indicates session failure
+                if ($statusCode === 302) {
+                    $location = $response->header('Location');
+                    if ($location && (str_contains($location, 'login') || str_contains($location, 'auth'))) {
+                        return [
+                            'success' => false,
+                            'status' => $statusCode,
+                            'message' => 'Session expired or invalid cookie. Redirected to login.',
+                            'data' => $responseBody,
+                        ];
+                    }
+                }
+
                 return [
                     'success' => true,
                     'status' => $statusCode,
