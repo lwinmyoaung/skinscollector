@@ -308,17 +308,19 @@ class PaymentConfirmController extends Controller
                     return redirect()->back()->with('error', 'Game account not found for this MLBB order.');
                 }
 
-                $result = $service->buyProduct(
-                    $order->player_id,
-                    (string) ($order->server_id ?? ''),
-                    $order->product_id,
-                    null,
-                    $quantity
-                );
+                for ($i = 0; $i < $quantity; $i++) {
+                    $result = $service->buyProduct(
+                        $order->player_id,
+                        (string) ($order->server_id ?? ''),
+                        $order->product_id,
+                        null,
+                        1
+                    );
 
-                if (! ($result['success'] ?? false)) {
-                    $message = $result['message'] ?? 'Unknown error from game service.';
-                    return redirect()->back()->with('error', 'MLBB order failed: ' . $message);
+                    if (! ($result['success'] ?? false)) {
+                        $message = $result['message'] ?? 'Unknown error from game service.';
+                        return redirect()->back()->with('error', 'MLBB order failed on item ' . ($i + 1) . ': ' . $message);
+                    }
                 }
             } elseif ($order->game_type === 'pubg') {
                 $service = new LaravelPubgService;
@@ -387,20 +389,22 @@ class PaymentConfirmController extends Controller
 
                 $amount = $product->diamonds;
 
-                $result = $service->order(
-                    $order->player_id,
-                    $order->product_id,
-                    (string) ($order->server_id ?? ''),
-                    null,
-                    $amount,
-                    null,
-                    'usecoin',
-                    $quantity
-                );
+                for ($i = 0; $i < $quantity; $i++) {
+                    $result = $service->order(
+                        $order->player_id,
+                        $order->product_id,
+                        (string) ($order->server_id ?? ''),
+                        null,
+                        $amount,
+                        null,
+                        'usecoin',
+                        1
+                    );
 
-                if (! ($result['ok'] ?? false)) {
-                    $message = $result['error'] ?? $result['message'] ?? 'Unknown error from game service.';
-                    return redirect()->back()->with('error', 'WWM order failed: ' . $message);
+                    if (! ($result['ok'] ?? false)) {
+                        $message = $result['error'] ?? $result['message'] ?? 'Unknown error from game service.';
+                        return redirect()->back()->with('error', 'WWM order failed on item ' . ($i + 1) . ': ' . $message);
+                    }
                 }
             } else {
                 return redirect()->back()->with('error', 'Unsupported game type for this order.');
