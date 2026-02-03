@@ -28,13 +28,24 @@ use Illuminate\Support\Str;
 
 class PaymentConfirmController extends Controller
 {
-    public function userIndex()
+    public function userIndex(Request $request)
     {
-        $orders = KpayOrder::where('user_id', Auth::id())
-            ->latest()
-            ->paginate(10);
+        $query = KpayOrder::where('user_id', Auth::id());
 
-        return view('user.orders', compact('orders'));
+        if ($request->filled('game_type')) {
+            $query->where('game_type', $request->game_type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->latest()->paginate(10);
+
+        $games = ['mlbb', 'pubg', 'mcgg', 'wwm'];
+        $statuses = ['pending', 'approved', 'rejected', 'cancelled'];
+
+        return view('user.kpay_orders', compact('orders', 'games', 'statuses'));
     }
 
     public function fetchUserOrders()
