@@ -134,16 +134,7 @@
                             <span class="ml-card-title">Select Items</span>
                         </div>
                         <div class="ml-card-body">
-                            <div id="regionMismatchCard" class="mb-3" style="display:none;">
-                                <div class="d-flex align-items-center" style="background-color:#fff8e1;border:1px solid #ffd54f;border-radius:12px;padding:12px;">
-                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                    <div class="me-3">
-                                        <div class="fw-bold" style="color:#856404;">Region Mismatch</div>
-                                        <div class="small" style="color:#6c757d;">Please buy from the same region.</div>
-                                    </div>
-                                    <button type="button" class="btn btn-warning btn-sm ms-auto" id="switchToUserRegionBtn">Switch region</button>
-                                </div>
-                            </div>
+                            <!-- Removed Region Mismatch Card -->
                             @php
                                 $passProducts = $mlproducts->filter(function($p) {
                                     $n = strtolower($p->name);
@@ -263,13 +254,7 @@
                     return;
                 }
 
-                if (userRegionNorm && userRegionNorm !== currentRegion) {
-                    if (regionMismatchCard) {
-                        regionMismatchCard.style.display = 'block';
-                        regionMismatchCard.scrollIntoView({behavior:'smooth', block:'center'});
-                    }
-                    return;
-                }
+                // Removed mismatch check
 
                 const selectedProduct = document.querySelector('input[name="product_id"]:checked');
                 if (!selectedProduct) {
@@ -314,6 +299,9 @@
                 .then(data => {
                     if (data.status === true || data.result === 1) {
                         let name = data.nickname || data.username || data.name || "Unknown";
+                        let region = data.region || "";
+                        if (region) name = name + " (" + region + ")";
+                        
                         document.getElementById('confirmNickname').textContent = name;
                         if(finalSubmitBtn) finalSubmitBtn.disabled = false;
                     } else {
@@ -390,44 +378,19 @@
 
                 if (data.status === true || data.result === 1) {
                     let name = data.nickname || data.username || "Unknown";
+                    let region = data.region || "";
+                    
+                    if (region) {
+                        name = name + " (" + region + ")";
+                    }
+
                     usernameText.textContent = name;
                     usernameDisplay.style.display = 'block';
                     usernameDisplay.querySelector('.alert').classList.remove('alert-danger');
                     usernameDisplay.querySelector('.alert').classList.add('alert-info');
                     usernameDisplay.querySelector('i').className = 'fas fa-user-circle me-2';
                     
-                    // Region Validation Logic
-                    if (data.region) {
-                        userRegionNorm = data.region.toLowerCase().trim(); 
-                        
-                        // Normalize common ISO codes and variations
-                        const regionMap = {
-                            'mm': 'myanmar',
-                            'myanmar (burma)': 'myanmar',
-                            'burma': 'myanmar',
-                            'my': 'malaysia',
-                            'ph': 'philippines',
-                            'sg': 'singapore',
-                            'id': 'indonesia',
-                            'ru': 'russia',
-                            'br': 'brazil',
-                            'kh': 'cambodia',
-                            'th': 'thailand',
-                            'vn': 'vietnam'
-                        };
-
-                        if (regionMap[userRegionNorm]) {
-                            userRegionNorm = regionMap[userRegionNorm];
-                        }
-                        
-                        // Compare with selected region
-                        if (currentRegion !== userRegionNorm) {
-                            if (regionMismatchCard) {
-                                regionMismatchCard.style.display = 'block';
-                                regionMismatchCard.scrollIntoView({behavior:'smooth', block:'center'});
-                            }
-                        }
-                    }
+                    // Region Validation Logic Removed
 
                 } else {
                     usernameText.textContent = "Player not found";
