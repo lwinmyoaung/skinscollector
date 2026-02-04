@@ -40,8 +40,8 @@ class GameImageController extends Controller
             $file = $request->file('image');
             
             // Option 1: Fast Storage Flow
-            // Upload to storage/app/public/game_images
-            $path = $file->store('game_images', 'adminimages');
+            // Upload to adminimages/photo
+            $path = $file->store('photo', 'adminimages');
             
             // Delete old image if it exists and is in the new storage
             if ($game->image_path && Storage::disk('adminimages')->exists($game->image_path)) {
