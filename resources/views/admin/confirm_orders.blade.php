@@ -324,8 +324,8 @@
         // Initial fetch to set the badge count
         fetchOrders();
 
-        // Auto refresh every 10 seconds
-        setInterval(fetchOrders, 10000);
+        // Auto refresh every 3 seconds for live updates
+        setInterval(fetchOrders, 3000);
 
         function fetchOrders() {
             // Construct URL with current query parameters to maintain filters

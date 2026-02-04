@@ -48,6 +48,7 @@
             <a href="{{ route('admin.confirm.orders') }}" class="admin-nav-link {{ request()->routeIs('admin.confirm.orders') ? 'active' : '' }}">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Orders</span>
+                <span id="sidebar-pending-count" class="badge bg-danger rounded-pill ms-auto" style="display: none;">0</span>
             </a>
             <a href="{{ route('admin.ads') }}" class="admin-nav-link {{ request()->routeIs('admin.ads') ? 'active' : '' }}">
                 <i class="fas fa-images"></i>
@@ -137,6 +138,16 @@
                 <div class="admin-topbar-title">
                     @yield('page_title', 'Admin Dashboard')
                 </div>
+                
+                <div class="ms-auto me-3">
+                    <a href="{{ route('admin.confirm.orders') }}" class="position-relative text-dark text-decoration-none" title="Pending Orders">
+                        <i class="fas fa-bell fa-lg text-secondary"></i>
+                        <span id="global-pending-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.65rem;">
+                            0
+                        </span>
+                    </a>
+                </div>
+
                 <div class="admin-topbar-user">
                     <span class="admin-user-name d-none d-sm-inline">
                         {{ auth()->user()->name ?? auth()->user()->email ?? 'Admin' }}
@@ -188,7 +199,39 @@
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 @endif
     <script defer src="{{ asset('js/admin.js') }}"></script>
-@yield('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const badge = document.getElementById('global-pending-count');
+            const sidebarBadge = document.getElementById('sidebar-pending-count');
+            const fetchUrl = "{{ route('admin.confirm.orders.count') }}";
 
+            function updateBadge() {
+                fetch(fetchUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        const count = parseInt(data.count);
+                        if (count > 0) {
+                            badge.textContent = count;
+                            badge.style.display = 'inline-block';
+                            if (sidebarBadge) {
+                                sidebarBadge.textContent = count;
+                                sidebarBadge.style.display = 'inline-block';
+                            }
+                        } else {
+                            badge.style.display = 'none';
+                            if (sidebarBadge) {
+                                sidebarBadge.style.display = 'none';
+                            }
+                        }
+                    })
+                    .catch(e => console.error('Badge poll error', e));
+            }
+            
+            // Initial call
+            updateBadge();
+            // Poll every 2s for live updates
+            setInterval(updateBadge, 2000);
+        });
+    </script>
 </body>
 </html>

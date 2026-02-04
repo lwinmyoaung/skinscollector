@@ -6,11 +6,29 @@
         <div class="col-12 col-sm-10 col-md-8 col-lg-6 text-center">
             <div class="card shadow-sm border-0 rounded-3">
                 <div class="card-body p-4 p-md-5">
-                    <div class="mb-4 text-success">
-                        <i class="fas fa-check-circle fa-5x"></i>
+                    <div class="mb-4 text-success d-flex justify-content-center">
+                        @php
+                            $orderVideoPath = \Illuminate\Support\Facades\Cache::remember('payment.success.video', 3600, function () {
+                                $files = \Illuminate\Support\Facades\Storage::disk('adminimages')->files('orderconfirmimage');
+                                foreach ($files as $file) {
+                                    if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4') {
+                                        return $file;
+                                    }
+                                }
+                                return null;
+                            });
+                        @endphp
+
+                        @if($orderVideoPath)
+                            <video autoplay muted loop playsinline style="max-width: 150px; height: auto;">
+                                <source src="{{ asset('adminimages/'.$orderVideoPath) }}" type="video/mp4">
+                                <i class="fas fa-check-circle fa-5x"></i>
+                            </video>
+                        @else
+                            <i class="fas fa-check-circle fa-5x"></i>
+                        @endif
                     </div>
                     
-                    <h2 class="fw-bold mb-3 fs-3 fs-md-2">Order တင်ခြင်းအောင်မြင်ပါသည်</h2>
                     
                     <div class="text-muted mb-4">
                         <p class="fw-bold text-dark mb-3" style="font-size: 1.1rem;">
@@ -28,10 +46,10 @@
                     
                     <div class="d-grid gap-2 col-12 col-md-10 mx-auto">
                         <a href="{{ route('game.category') }}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-home me-2"></i> Return to Home
+                            <i class="fas fa-home me-2"></i> ပင်မစာမျက်နှာသို့
                         </a>
                         <a href="{{ route('user.kpay.orders') }}" class="btn btn-outline-secondary btn-lg">
-                            <i class="fas fa-history me-2"></i> View Order History
+                            <i class="fas fa-history me-2"></i> Order မှတ်တမ်း
                         </a>
                     </div>
                 </div>

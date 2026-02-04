@@ -88,9 +88,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 $layoutEntryAdPath = null;
                 if (request()->routeIs('game.category')) {
                     $layoutEntryAdPath = \Illuminate\Support\Facades\Cache::remember('layout.entry_ad', 3600, function () {
-                        $entryFiles = \Illuminate\Support\Facades\Storage::disk('public')->files('ads/entry');
+                        $entryFiles = \Illuminate\Support\Facades\Storage::disk('adminimages')->files('ads/entry');
                         foreach ($entryFiles as $file) {
-                            if (preg_match('/\.(jpg|jpeg|png|webp)$/i', $file)) {
+                            if (preg_match('/\.(jpg|jpeg|png|webp|gif|mp4)$/i', $file)) {
                                 return $file;
                             }
                         }
@@ -103,7 +103,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="layout-entry-ad-backdrop"></div>
                     <div class="layout-entry-ad-container">
                         <button type="button" class="btn-close layout-entry-ad-close" aria-label="Close"></button>
-                        <img src="{{ asset('adminimages/'.$layoutEntryAdPath) }}" alt="Advertisement" class="layout-entry-ad-image" fetchpriority="high" decoding="async">
+                        @if(preg_match('/\.mp4$/i', $layoutEntryAdPath))
+                            <video class="layout-entry-ad-image" autoplay muted loop playsinline controlsList="nodownload">
+                                <source src="{{ asset('adminimages/'.$layoutEntryAdPath) }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        @else
+                            <img src="{{ asset('adminimages/'.$layoutEntryAdPath) }}" alt="Advertisement" class="layout-entry-ad-image" fetchpriority="high" decoding="async">
+                        @endif
                     </div>
                 </div>
                 <style>

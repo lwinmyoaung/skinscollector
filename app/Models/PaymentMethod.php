@@ -21,7 +21,7 @@ class PaymentMethod extends Model
         }
         
         if (\Illuminate\Support\Str::startsWith($this->image, 'payment_methods/')) {
-            return asset('storage/' . $this->image);
+            return asset('adminimages/' . $this->image);
         }
         
         return asset('adminimages/images/paymentmethodphoto/' . $this->image);

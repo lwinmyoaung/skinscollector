@@ -28,8 +28,10 @@ class KpayOrder extends Model
             return asset('adminimages/default.jpg');
         }
         
+        // Since we moved to adminimages disk, all paths should be prefixed with adminimages/
+        // The stored path is like 'topups/filename.jpg'.
         if (\Illuminate\Support\Str::startsWith($this->transaction_image, 'topups/')) {
-            return asset('storage/' . $this->transaction_image);
+            return asset('adminimages/' . $this->transaction_image);
         }
         
         return asset('adminimages/topups/' . $this->transaction_image);

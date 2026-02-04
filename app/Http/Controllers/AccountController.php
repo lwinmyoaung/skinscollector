@@ -57,21 +57,21 @@ class AccountController extends Controller
     {
         $directory = 'ads/slides';
 
-        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($directory);
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($directory);
         }
 
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
-        $files = collect(\Illuminate\Support\Facades\Storage::disk('public')->files($directory))
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif','mp4'];
+        $files = collect(\Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory))
             ->filter(function ($file) use ($allowedExtensions) {
                 return in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowedExtensions, true);
             })
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('storage/'.$file),
-                    'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
-                    'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
+                    'url' => asset('adminimages/' . $file),
+                    'size' => \Illuminate\Support\Facades\Storage::disk('adminimages')->size($file),
+                    'modified' => \Illuminate\Support\Facades\Storage::disk('adminimages')->lastModified($file),
                 ];
             })
             ->sortByDesc('modified')
@@ -79,20 +79,20 @@ class AccountController extends Controller
 
         $entryDirectory = 'ads/entry';
 
-        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($entryDirectory)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($entryDirectory);
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($entryDirectory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($entryDirectory);
         }
 
-        $entryFiles = collect(\Illuminate\Support\Facades\Storage::disk('public')->files($entryDirectory))
+        $entryFiles = collect(\Illuminate\Support\Facades\Storage::disk('adminimages')->files($entryDirectory))
             ->filter(function ($file) use ($allowedExtensions) {
                 return in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowedExtensions, true);
             })
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('storage/'.$file),
-                    'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
-                    'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
+                    'url' => asset('adminimages/' . $file),
+                    'size' => \Illuminate\Support\Facades\Storage::disk('adminimages')->size($file),
+                    'modified' => \Illuminate\Support\Facades\Storage::disk('adminimages')->lastModified($file),
                 ];
             })
             ->sortByDesc('modified')
@@ -102,20 +102,20 @@ class AccountController extends Controller
 
         $iconDirectory = 'logo';
 
-        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($iconDirectory)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($iconDirectory);
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($iconDirectory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($iconDirectory);
         }
 
-        $iconFiles = collect(\Illuminate\Support\Facades\Storage::disk('public')->files($iconDirectory))
+        $iconFiles = collect(\Illuminate\Support\Facades\Storage::disk('adminimages')->files($iconDirectory))
             ->filter(function ($file) use ($allowedExtensions) {
                 return in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowedExtensions, true);
             })
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
-                    'url' => asset('storage/'.$file),
-                    'size' => \Illuminate\Support\Facades\Storage::disk('public')->size($file),
-                    'modified' => \Illuminate\Support\Facades\Storage::disk('public')->lastModified($file),
+                    'url' => asset('adminimages/' . $file),
+                    'size' => \Illuminate\Support\Facades\Storage::disk('adminimages')->size($file),
+                    'modified' => \Illuminate\Support\Facades\Storage::disk('adminimages')->lastModified($file),
                 ];
             })
             ->sortByDesc('modified')
@@ -123,10 +123,31 @@ class AccountController extends Controller
 
         $appIcon = $iconFiles->first();
 
+        $orderVideoDirectory = 'orderconfirmimage';
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($orderVideoDirectory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($orderVideoDirectory);
+        }
+        $orderVideoFiles = collect(\Illuminate\Support\Facades\Storage::disk('adminimages')->files($orderVideoDirectory))
+            ->filter(function ($file) {
+                return strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4';
+            })
+            ->map(function ($file) {
+                return [
+                    'name' => basename($file),
+                    'url' => asset('adminimages/' . $file),
+                    'size' => \Illuminate\Support\Facades\Storage::disk('adminimages')->size($file),
+                    'modified' => \Illuminate\Support\Facades\Storage::disk('adminimages')->lastModified($file),
+                ];
+            })
+            ->sortByDesc('modified')
+            ->values();
+        $orderVideo = $orderVideoFiles->first();
+
         return view('admin.dashboard', [
             'slides' => $files,
             'entryAd' => $entryAd,
             'appIcon' => $appIcon,
+            'orderVideo' => $orderVideo,
         ]);
     }
 
@@ -139,7 +160,7 @@ class AccountController extends Controller
 
         foreach ($validated['images'] as $image) {
             // Option 1: Fast Storage Flow
-            $image->store('ads/slides', 'public');
+            $image->store('ads/slides', 'adminimages');
         }
 
         Cache::forget('home.slides');
@@ -163,8 +184,8 @@ class AccountController extends Controller
 
         $path = 'ads/slides/'.$filename;
 
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
+        if (\Illuminate\Support\Facades\Storage::disk('adminimages')->exists($path)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($path);
             Cache::forget('home.slides');
         }
 
@@ -174,21 +195,21 @@ class AccountController extends Controller
     public function entryAdStore(Request $request)
     {
         $validated = $request->validate([
-            'entry_image' => ['required', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'entry_image' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,gif,mp4', 'max:20480'],
         ]);
 
         $directory = 'ads/entry';
 
-        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($directory);
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($directory);
         }
 
-        $existingFiles = \Illuminate\Support\Facades\Storage::disk('public')->files($directory);
+        $existingFiles = \Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory);
         foreach ($existingFiles as $file) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($file);
         }
 
-        $validated['entry_image']->store($directory, 'public');
+        $validated['entry_image']->store($directory, 'adminimages');
 
         Cache::forget('layout.entry_ad');
 
@@ -199,10 +220,10 @@ class AccountController extends Controller
     {
         $directory = 'ads/entry';
 
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
-            $files = \Illuminate\Support\Facades\Storage::disk('public')->files($directory);
+        if (\Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            $files = \Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory);
             foreach ($files as $file) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
+                \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($file);
             }
             Cache::forget('layout.entry_ad');
         }
@@ -218,16 +239,16 @@ class AccountController extends Controller
 
         $directory = 'logo';
 
-        if (! \Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($directory);
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($directory);
         }
 
-        $existingFiles = \Illuminate\Support\Facades\Storage::disk('public')->files($directory);
+        $existingFiles = \Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory);
         foreach ($existingFiles as $file) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($file);
         }
 
-        $validated['app_icon']->store($directory, 'public');
+        $validated['app_icon']->store($directory, 'adminimages');
 
         return redirect()->route('admin.dashboard')->with('success', 'App icon updated successfully.');
     }
@@ -236,14 +257,50 @@ class AccountController extends Controller
     {
         $directory = 'logo';
 
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
-            $files = \Illuminate\Support\Facades\Storage::disk('public')->files($directory);
+        if (\Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            $files = \Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory);
             foreach ($files as $file) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($file);
+                \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($file);
             }
         }
 
         return redirect()->route('admin.dashboard')->with('success', 'App icon removed successfully.');
+    }
+
+    public function orderVideoStore(Request $request)
+    {
+        $validated = $request->validate([
+            'order_video' => ['required', 'file', 'mimes:mp4', 'max:51200'], // 50MB max
+        ]);
+
+        $directory = 'orderconfirmimage';
+
+        if (! \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->makeDirectory($directory);
+        }
+
+        $existingFiles = \Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory);
+        foreach ($existingFiles as $file) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($file);
+        }
+
+        $validated['order_video']->store($directory, 'adminimages');
+
+        return redirect()->route('admin.ads')->with('success', 'Order confirm video updated successfully.');
+    }
+
+    public function orderVideoDestroy()
+    {
+        $directory = 'orderconfirmimage';
+
+        if (\Illuminate\Support\Facades\Storage::disk('adminimages')->exists($directory)) {
+            $files = \Illuminate\Support\Facades\Storage::disk('adminimages')->files($directory);
+            foreach ($files as $file) {
+                \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($file);
+            }
+        }
+
+        return redirect()->route('admin.ads')->with('success', 'Order confirm video removed successfully.');
     }
 
     public function cookieAndApiIndex()
@@ -770,8 +827,8 @@ class AccountController extends Controller
         $topup = TopUp::findOrFail($id);
 
         // Delete the transaction image from storage
-        if ($topup->transaction_image && \Illuminate\Support\Facades\Storage::disk('public')->exists($topup->transaction_image)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($topup->transaction_image);
+        if ($topup->transaction_image && \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($topup->transaction_image)) {
+            \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($topup->transaction_image);
         }
 
         // Delete the record
@@ -798,8 +855,8 @@ class AccountController extends Controller
         $count = 0;
         foreach ($topups as $topup) {
             // Delete image
-            if ($topup->transaction_image && \Illuminate\Support\Facades\Storage::disk('public')->exists($topup->transaction_image)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($topup->transaction_image);
+            if ($topup->transaction_image && \Illuminate\Support\Facades\Storage::disk('adminimages')->exists($topup->transaction_image)) {
+                \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($topup->transaction_image);
             }
 
             // Delete record

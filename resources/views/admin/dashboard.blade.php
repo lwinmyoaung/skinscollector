@@ -76,7 +76,7 @@
         <div class="card-body pt-0">
             <form action="{{ route('admin.entry_ad.store') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center mb-3">
                 @csrf
-                <input type="file" name="entry_image" class="form-control" accept="image/*" required>
+                <input type="file" name="entry_image" class="form-control" accept="image/*,video/mp4" required>
                 <button type="submit" class="btn btn-danger">
                     <i class="fas fa-save me-2"></i>Save Entry Ad
                 </button>
@@ -84,7 +84,11 @@
             @if($entryAd ?? false)
                 <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
                     <div class="border rounded bg-light p-2">
-                        <img src="{{ $entryAd['url'] }}" alt="{{ $entryAd['name'] }}" loading="lazy" decoding="async" style="height: 120px; width: 214px; object-fit: cover;">
+                        @if(Str::endsWith(strtolower($entryAd['name']), '.mp4'))
+                            <video src="{{ $entryAd['url'] }}" autoplay muted loop playsinline style="height: 120px; width: 214px; object-fit: cover;"></video>
+                        @else
+                            <img src="{{ $entryAd['url'] }}" alt="{{ $entryAd['name'] }}" loading="lazy" decoding="async" style="height: 120px; width: 214px; object-fit: cover;">
+                        @endif
                     </div>
                     <div class="d-flex flex-column flex-md-row gap-2">
                         <div class="text-muted small">
@@ -104,6 +108,44 @@
                 <div class="text-muted small">No entry popup ad set yet.</div>
             @endif
             <div class="text-muted small mt-2">This image is shown once when users open the homepage.</div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 pb-2">
+            <h2 class="h6 mb-0 fw-bold"><i class="fas fa-video me-2 text-success"></i>Order Confirm Video</h2>
+        </div>
+        <div class="card-body pt-0">
+            <form action="{{ route('admin.order_video.store') }}" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-md-row gap-2 align-items-start align-items-md-center mb-3">
+                @csrf
+                <input type="file" name="order_video" class="form-control" accept="video/mp4" required>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Save Video
+                </button>
+            </form>
+            @if($orderVideo ?? false)
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+                    <div class="border rounded bg-light p-2">
+                        <video src="{{ $orderVideo['url'] }}" autoplay muted loop playsinline style="height: 120px; width: 214px; object-fit: cover;"></video>
+                    </div>
+                    <div class="d-flex flex-column flex-md-row gap-2">
+                        <div class="text-muted small">
+                            <div class="fw-semibold">Current video: {{ $orderVideo['name'] }}</div>
+                            <div>{{ number_format(($orderVideo['size'] ?? 0) / 1024, 0) }} KB</div>
+                        </div>
+                        <form action="{{ route('admin.order_video.destroy') }}" method="POST" onsubmit="return confirm('Remove current order confirm video?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash-alt me-1"></i>Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <div class="text-muted small">No order confirm video set yet.</div>
+            @endif
+            <div class="text-muted small mt-2">This video replaces the checkmark icon on the order success page.</div>
         </div>
     </div>
 

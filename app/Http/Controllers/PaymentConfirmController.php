@@ -113,9 +113,10 @@ class PaymentConfirmController extends Controller
             $file = $request->file('transaction_image');
             
             // Option 1: Fast Storage Flow
-            // Upload to storage/app/public/topups
-            $path = $file->store('topups', 'public');
+            // Upload to adminimages/topups
+            $path = $file->store('topups', 'adminimages');
             
+            // Return clean URL path (e.g. topups/filename.jpg) instead of storage path
             $data['transaction_image'] = $path;
         }
 
@@ -253,7 +254,19 @@ class PaymentConfirmController extends Controller
         // Render the partial view
         $html = view('admin.partials.confirm_orders_table', compact('orders'))->render();
 
-        return response()->json(['html' => $html]);
+        // Get pending count
+        $pendingCount = KpayOrder::where('status', 'pending')->count();
+
+        return response()->json([
+            'html' => $html,
+            'pending_count' => $pendingCount
+        ]);
+    }
+
+    public function fetchPendingCount()
+    {
+        $count = KpayOrder::where('status', 'pending')->count();
+        return response()->json(['count' => $count]);
     }
 
     private function getFilteredOrders(Request $request)
@@ -736,8 +749,8 @@ class PaymentConfirmController extends Controller
                     $imagePath = 'topups/' . $imagePath;
                 }
                 
-                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($imagePath)) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($imagePath);
+                if (\Illuminate\Support\Facades\Storage::disk('adminimages')->exists($imagePath)) {
+                    \Illuminate\Support\Facades\Storage::disk('adminimages')->delete($imagePath);
                 }
             }
             $order->delete();

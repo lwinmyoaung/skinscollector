@@ -16,7 +16,7 @@ class AdminDeleteOldOrdersTest extends TestCase
 
     public function test_admin_can_delete_old_orders_and_images()
     {
-        Storage::fake('public');
+        Storage::fake('adminimages');
 
         // Create admin user
         $admin = User::factory()->create([
@@ -28,7 +28,7 @@ class AdminDeleteOldOrdersTest extends TestCase
         $oldFile = UploadedFile::fake()->create('old_transaction.txt', 100);
         // Simulate storage
         $oldFilename = 'old_transaction.txt';
-        Storage::disk('public')->put('topups/' . $oldFilename, $oldFile->getContent());
+        Storage::disk('adminimages')->put('topups/' . $oldFilename, $oldFile->getContent());
 
         $oldOrder = KpayOrder::create([
             'user_id' => 1,
@@ -81,11 +81,11 @@ class AdminDeleteOldOrdersTest extends TestCase
         // Assert old order is gone
         $this->assertDatabaseMissing('kpay_orders', ['id' => $oldOrder->id]);
         // Assert old image is gone
-        Storage::disk('public')->assertMissing('topups/' . $oldFilename);
+        Storage::disk('adminimages')->assertMissing('topups/' . $oldFilename);
 
         // Assert new order still exists
         $this->assertDatabaseHas('kpay_orders', ['id' => $newOrder->id]);
         // Assert new image still exists
-        Storage::disk('public')->assertExists('topups/' . $newFilename);
+        Storage::disk('adminimages')->assertExists('topups/' . $newFilename);
     }
 }

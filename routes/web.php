@@ -41,6 +41,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::delete('entry-ad', [AccountController::class, 'entryAdDestroy'])->name('admin.entry_ad.destroy');
     Route::post('app-icon', [AccountController::class, 'appIconStore'])->name('admin.app_icon.store');
     Route::delete('app-icon', [AccountController::class, 'appIconDestroy'])->name('admin.app_icon.destroy');
+    Route::post('order-video', [AccountController::class, 'orderVideoStore'])->name('admin.order_video.store');
+    Route::delete('order-video', [AccountController::class, 'orderVideoDestroy'])->name('admin.order_video.destroy');
 
     Route::get('cookie-and-api', [AccountController::class, 'cookieAndApiIndex'])->name('admin.cookieandapi');
     Route::post('cookie-and-api', [AccountController::class, 'cookieAndApiUpdate'])->name('admin.cookieandapi.update');
@@ -118,6 +120,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('confirm-orders', [\App\Http\Controllers\PaymentConfirmController::class, 'adminIndex'])->name('admin.confirm.orders');
     Route::delete('confirm-orders/cleanup', [\App\Http\Controllers\PaymentConfirmController::class, 'deleteOldOrders'])->name('admin.confirm.orders.delete_old');
     Route::get('confirm-orders/fetch', [\App\Http\Controllers\PaymentConfirmController::class, 'fetchOrders'])->name('admin.confirm.orders.fetch');
+    Route::get('confirm-orders/count', [\App\Http\Controllers\PaymentConfirmController::class, 'fetchPendingCount'])->name('admin.confirm.orders.count');
     Route::post('confirm-orders/{order}/approve', [\App\Http\Controllers\PaymentConfirmController::class, 'approve'])->name('admin.confirm.orders.approve');
     Route::post('confirm-orders/{order}/approve-item', [\App\Http\Controllers\PaymentConfirmController::class, 'approveItem'])->name('admin.confirm.orders.approve_item');
     Route::post('confirm-orders/{order}/finalize', [\App\Http\Controllers\PaymentConfirmController::class, 'finalizeApproval'])->name('admin.confirm.orders.finalize');

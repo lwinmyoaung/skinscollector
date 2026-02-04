@@ -12,7 +12,7 @@ class HomeController extends Controller
     {
         // Cache the directory scanning for slides (1 hour)
         $advertiseSlides = \Illuminate\Support\Facades\Cache::remember('home.slides', 3600, function () {
-            $files = \Illuminate\Support\Facades\Storage::disk('public')->files('ads/slides');
+            $files = \Illuminate\Support\Facades\Storage::disk('adminimages')->files('ads/slides');
             $slides = array_filter($files, function($file) {
                 return preg_match('/\.(jpg|jpeg|png|webp)$/i', $file);
             });

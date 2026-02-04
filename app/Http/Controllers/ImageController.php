@@ -77,7 +77,7 @@ class ImageController extends Controller
 
         if ($request->image) {
             // Option 1: Fast Storage Flow
-            $path = request()->image->store('payment_methods', 'public');
+            $path = request()->image->store('payment_methods', 'adminimages');
             $paymentmethod->image = $path;
         }
 
