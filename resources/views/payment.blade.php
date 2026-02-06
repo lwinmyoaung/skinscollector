@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/alert-card.css') }}">
     <style>
         :root {
             --primary-color: #0d6efd;
@@ -26,6 +28,7 @@
         body {
             background-color: #f5f7fb;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            padding-top: 0 !important;
         }
         
         .card {
