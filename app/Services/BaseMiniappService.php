@@ -82,12 +82,19 @@ abstract class BaseMiniappService
      */
     protected function extractCsrfToken(string $html): ?string
     {
-        if (! preg_match('/<meta\\s+name=[\'"]csrf-token[\'"]\\s+content=[\'"]([^\'"]+)[\'"]/i', $html, $m)) {
-            return null;
+        // Try standard Laravel meta tag: <meta name="csrf-token" content="...">
+        if (preg_match('/<meta\s+name=[\'"]csrf-token[\'"]\s+content=[\'"]([^\'"]+)[\'"]/i', $html, $m)) {
+            $token = trim($m[1]);
+            if ($token !== '') return $token;
         }
-        $token = trim($m[1]);
 
-        return $token !== '' ? $token : null;
+        // Try reverse order: <meta content="..." name="csrf-token">
+        if (preg_match('/<meta\s+content=[\'"]([^\'"]+)[\'"]\s+name=[\'"]csrf-token[\'"]/i', $html, $m)) {
+            $token = trim($m[1]);
+            if ($token !== '') return $token;
+        }
+
+        return null;
     }
 
     /**
@@ -146,12 +153,40 @@ abstract class BaseMiniappService
         ];
 
         // Fetch shop page to get CSRF token and session cookies
-        $options = $this->getHttpOptions(['cookies' => $jar]);
-        $resp = Http::withOptions($options)
-            ->withHeaders($baseHeaders)
-            ->get($shopUrl);
+        // Add retry mechanism
+        $csrf = null;
+        $maxRetries = 5;
+        
+        for ($i = 0; $i < $maxRetries; $i++) {
+            try {
+                $options = $this->getHttpOptions(['cookies' => $jar]);
+                $resp = Http::withOptions($options)
+                    ->withHeaders($baseHeaders)
+                    ->get($shopUrl);
 
-        $csrf = $resp->successful() ? $this->extractCsrfToken((string) $resp->body()) : null;
+                if ($resp->successful()) {
+                    $csrf = $this->extractCsrfToken((string) $resp->body());
+                    if ($csrf) {
+                        break;
+                    } else {
+                        \Illuminate\Support\Facades\Log::warning("BaseMiniappService: CSRF not found in attempt " . ($i+1));
+                    }
+                } else {
+                     \Illuminate\Support\Facades\Log::warning("BaseMiniappService: HTTP " . $resp->status() . " in attempt " . ($i+1));
+                }
+                
+                // If failed, wait a bit before retry
+                if ($i < $maxRetries - 1) {
+                    sleep(2);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("BaseMiniappService: Exception " . $e->getMessage() . " in attempt " . ($i+1));
+                // If exception, wait and retry
+                if ($i < $maxRetries - 1) {
+                    sleep(2);
+                }
+            }
+        }
 
         return [
             'cookieJar' => $jar,
